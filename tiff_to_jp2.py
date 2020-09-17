@@ -11,7 +11,7 @@ from PIL.TiffTags import TAGS
 default_options = [
                    "-r 1.5",
                    "-c [256,256],[256,256],[128,128]",
-                   "-b [64,64]",
+                   "-b 64,64",
                    "-p RPCL"
                    ]
 
@@ -32,34 +32,35 @@ def get_dimensions(file):
 def calculate_layers(width, height):
     pixdem = max(width, height)
     layers = math.ceil((math.log(pixdem) / math.log(2)) - ((math.log(96) / math.log(2)))) + 1
+    return layers
 
 def is_tiff(file):
     type = mimetypes.MimeTypes().guess_type(file)[0]
-    if type = "image/tiff":
+    if type == "image/tiff":
         return True
     else:
         return False
 
-def make_filenames(start_directory, end_directory):
-    original_file = "{}{}".format(args.start_directory, file)
+def make_filenames(start_directory, end_directory, file):
+    original_file = "{}/{}".format(start_directory, file)
     fname = file.split(".")[0]
-    derivative_file = "{}{}.jp2".format(args.end_directory, fname)
+    derivative_file = "{}/{}.jp2".format(end_directory, fname)
     return original_file, derivative_file
 
 def main():
-     """Main function, which is run when this script is executed"""
+    """Main function, which is run when this script is executed"""
     parser = get_parser()
     args = parser.parse_args()
     for file in os.listdir(args.input_directory):
-        make_filenames(input_directory, output_directory)
+        original_file, derivative_file = make_filenames(args.input_directory, args.output_directory, file)
         if os.path.isfile(derivative_file):
             print("Derivative file already exists")
         else:
             if is_tiff(original_file):
-                get_dimensions(original_file)
-                resolutions = calculate_layers(image_width, image_height)
+                width, height = get_dimensions(original_file)
+                resolutions = calculate_layers(width, height)
                 os.system("opj_compress -i {} -o {} -n {} {} -SOP".format(
-                    original_file, derivative_file, resolutions, default_options.join(' ')))
+                    original_file, derivative_file, resolutions, ' '.join(default_options)))
             else:
                 print("Not a valid tiff file")
 

@@ -78,12 +78,12 @@ for ident in identifiers:
     manifest_label = ident.title()
     manifest = fac.manifest(ident=ident, label=manifest_label)
     seq = manifest.sequence()
+    page_number = 0
     files = sorted(get_matching_files(ident, image_dir))
     for file in files:
         ref = file[:-4]
-        canvas_label = get_page(file).lstrip('0')
-        # Label being pased off of filename page number means that human error will
-        # continue over. May want to just iterate up from 1?
+        page_number = page_number + 1
+        canvas_label = str(page_number)
         cvs = seq.canvas(ident=ref, label="Page {}".format(canvas_label))
         path = "{}{}".format(image_dir, file)
         width, height = get_dimensions(path)

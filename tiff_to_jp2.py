@@ -17,6 +17,7 @@ default_options = [
 
 def get_parser():
     parser = argparse.ArgumentParser()
+    parser.add_argument("-s", action="store_true")
     parser.add_argument("input_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
     parser.add_argument("output_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
     return parser
@@ -47,22 +48,37 @@ def make_filenames(start_directory, end_directory, file):
     derivative_file = "{}/{}.jp2".format(end_directory, fname)
     return original_file, derivative_file
 
+def check_existence(derivative_file):
+    if os.path.isfile(derivative_file):
+        return True
+    else:
+        return False
+
+def make_files(original_file, derivative_file, default_options):
+    if is_tiff(original_file):
+        width, height = get_dimensions(original_file)
+        resolutions = calculate_layers(width, height)
+        os.system("opj_compress -i {} -o {} -n {} {} -SOP".format(
+            original_file, derivative_file, resolutions, ' '.join(default_options)))
+    else:
+        print("Not a valid tiff file")
+
 def main():
     """Main function, which is run when this script is executed"""
     parser = get_parser()
     args = parser.parse_args()
     for file in os.listdir(args.input_directory):
         original_file, derivative_file = make_filenames(args.input_directory, args.output_directory, file)
-        if os.path.isfile(derivative_file):
+        if check_existence(derivative_file):
             print("Derivative file already exists")
-        else:
-            if is_tiff(original_file):
-                width, height = get_dimensions(original_file)
-                resolutions = calculate_layers(width, height)
-                os.system("opj_compress -i {} -o {} -n {} {} -SOP".format(
-                    original_file, derivative_file, resolutions, ' '.join(default_options)))
+            continue
+        if args.s:
+            if original_file.split('.')[0].endswith('001'):
+                pass
             else:
-                print("Not a valid tiff file")
+                make_files(original_file, derivative_file, default_options)
+        else:
+            make_files(original_file, derivative_file, default_options)
 
 if __name__ == "__main__":
     main()

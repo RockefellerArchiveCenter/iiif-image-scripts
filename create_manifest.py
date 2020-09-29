@@ -90,5 +90,4 @@ for ident in identifiers:
         cvs.set_hw(width, height)
         anno = cvs.annotation()
         img = anno.image("{}{}".format(image_dir,file))
-
-manifest.toFile(compact=False)
+    manifest.toFile(compact=False)

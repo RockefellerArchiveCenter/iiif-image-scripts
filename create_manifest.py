@@ -14,8 +14,8 @@ config.read("local_settings.cfg")
 def get_parser():
     """Defines and gets parser arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("input_dir", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
-    parser.add_argument("output_dir", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
+    parser.add_argument("input_dir", help="The full directory path of the jp2 image files (ex. /Documents/images/)")
+    parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
     return parser
 
 def clean_directories(input_dir, output_dir):

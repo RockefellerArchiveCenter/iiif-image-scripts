@@ -8,11 +8,11 @@ from pathlib import Path
 from PIL import Image
 from iiif_prezi.factory import ManifestFactory
 
-
+assert os.path.exists("local_settings.cfg")
 config = ConfigParser()
-config.read("local_settings.cfg")
-
-upgrader = Upgrader(flags={"flag_name" : "flag_value"})
+config.read(r"/Users/pgalligan/Desktop/image_compression/local_settings.cfg")
+#print(config.get("ArchivesSpace", "baseurl"))
+#prezi2to3 = config.get("Prezi", "path")
 
 def get_parser():
     """Defines and gets parser arguments."""
@@ -36,6 +36,7 @@ parser = get_parser()
 args = parser.parse_args()
 fac = ManifestFactory()
 fac.set_debug("error")
+upgrader = Upgrader(flags={"flag_name" : "flag_value"})
 
 """Sets directories for use in the manifest creation. Will need to change for dev/production."""
 image_dir, manifest_dir = clean_directories(args.input_dir, args.output_dir)
@@ -108,7 +109,7 @@ def get_dimensions(file):
         image_width, image_height = img.size
         return image_width, image_height
 
-#authorize_as()
+authorize_as()
 identifiers = get_identifiers(image_dir)
 for ident in identifiers:
     """Sets the overall manifest labels, instantiate the manifest, and then
@@ -134,4 +135,4 @@ for ident in identifiers:
         anno = cvs.annotation()
         img = anno.image("{}{}".format(image_dir,file))
     manifest.toFile(compact=False)
-    os.system("python3 /Users/pgalligan/Desktop/image_compression/prezi-2-to-3-master/prezi2to3.py {}{}.json --output {}{}.json".format(manifest_dir, ident, manifest_dir, ident))
+    os.system("python3 {}prezi2to3.py {}{}.json --output {}{}.json".format(prezi2to3, manifest_dir, ident, manifest_dir, ident))

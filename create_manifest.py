@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 
 from asnake.aspace import ASpace
@@ -133,4 +134,6 @@ for ident in identifiers:
         anno = cvs.annotation()
         img = anno.image("{}{}".format(image_dir,file))
     manifest.toFile(compact=False)
-    os.system("python3 {} {}{}.json --output {}{}.json".format(prezi2to3, manifest_dir, ident, manifest_dir, ident))
+    v3 = upgrader.process_cached("{}{}.json".format(manifest_dir, ident))
+    with open('{}{}.json'.format(manifest_dir, ident), 'w', encoding='utf-8') as file:
+        json.dump(v3, file, ensure_ascii=False, indent=4)

@@ -3,6 +3,7 @@ import os
 
 from asnake.aspace import ASpace
 from configparser import ConfigParser
+from iiif_prezi_upgrader import Upgrader
 from pathlib import Path
 from PIL import Image
 from iiif_prezi.factory import ManifestFactory
@@ -10,6 +11,8 @@ from iiif_prezi.factory import ManifestFactory
 
 config = ConfigParser()
 config.read("local_settings.cfg")
+
+upgrader = Upgrader(flags={"flag_name" : "flag_value"})
 
 def get_parser():
     """Defines and gets parser arguments."""
@@ -105,7 +108,7 @@ def get_dimensions(file):
         image_width, image_height = img.size
         return image_width, image_height
 
-authorize_as()
+#authorize_as()
 identifiers = get_identifiers(image_dir)
 for ident in identifiers:
     """Sets the overall manifest labels, instantiate the manifest, and then
@@ -131,3 +134,4 @@ for ident in identifiers:
         anno = cvs.annotation()
         img = anno.image("{}{}".format(image_dir,file))
     manifest.toFile(compact=False)
+    os.system("python3 /Users/pgalligan/Desktop/image_compression/prezi-2-to-3-master/prezi2to3.py {}{}.json --output {}{}.json".format(manifest_dir, ident, manifest_dir, ident))

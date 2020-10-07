@@ -8,11 +8,9 @@ from pathlib import Path
 from PIL import Image
 from iiif_prezi.factory import ManifestFactory
 
-assert os.path.exists("local_settings.cfg")
 config = ConfigParser()
-config.read(r"/Users/pgalligan/Desktop/image_compression/local_settings.cfg")
-#print(config.get("ArchivesSpace", "baseurl"))
-#prezi2to3 = config.get("Prezi", "path")
+config.read("local_settings.cfg")
+prezi2to3 = config.get("Prezi", "path")
 
 def get_parser():
     """Defines and gets parser arguments."""
@@ -135,4 +133,4 @@ for ident in identifiers:
         anno = cvs.annotation()
         img = anno.image("{}{}".format(image_dir,file))
     manifest.toFile(compact=False)
-    os.system("python3 {}prezi2to3.py {}{}.json --output {}{}.json".format(prezi2to3, manifest_dir, ident, manifest_dir, ident))
+    os.system("python3 {} {}{}.json --output {}{}.json".format(prezi2to3, manifest_dir, ident, manifest_dir, ident))

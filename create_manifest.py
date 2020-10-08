@@ -36,10 +36,10 @@ fac.set_debug("error")
 
 """Sets directories for use in the manifest creation. Will need to change for dev/production."""
 image_dir, manifest_dir = clean_directories(args.input_dir, args.output_dir)
-fac.set_base_image_dir(image_dir)
+fac.set_base_image_dir("/images")
 fac.set_base_prezi_dir(manifest_dir)
-fac.set_base_prezi_uri("http://example.org/iiif/prezi/")
-fac.set_base_image_uri("http://example.org/iiif/image/")
+fac.set_base_prezi_uri("http://192.168.50.74:8182/iiif/prezi/")
+fac.set_base_image_uri("http://192.168.50.74:8182/iiif")
 
 def authorize_as():
     """Authorize an ArchivesSpace session."""
@@ -129,5 +129,5 @@ for ident in identifiers:
         width, height = get_dimensions(path)
         cvs.set_hw(width, height)
         anno = cvs.annotation()
-        img = anno.image("{}{}".format(image_dir,file))
+        img = anno.image("/images/{}".format(file))
     manifest.toFile(compact=False)

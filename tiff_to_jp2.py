@@ -1,12 +1,19 @@
 import argparse
+import logging
 import math
 import mimetypes
 import os
+import subprocess
 
 from pathlib import Path
 from PIL import Image
 from PIL.TiffTags import TAGS
 
+
+
+logfile = 'logfile.log'
+logging.basicConfig(filename=logfile,
+                    level=logging.INFO)
 
 default_options = [
                    "-r 1.5",
@@ -21,6 +28,9 @@ def get_parser():
     parser.add_argument("input_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
     parser.add_argument("output_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
     return parser
+
+parser = get_parser()
+args = parser.parse_args()
 
 def get_dimensions(file):
     """Gets pixel dimensions of a file.
@@ -37,6 +47,21 @@ def get_dimensions(file):
         for y in img.tag[257]:
             image_height = y
         return image_width, image_height
+
+def clean_directories(start_directory, end_directory):
+    """Structures input and manifest directories based on whether they end in '/'.
+
+    Args:
+        start_directory (str): string representation of full path to directory with source files.
+        end_directory (str): string representation of full path to directory to save derivatives.
+
+    Returns:
+        source_dir (str): string representation of the full path to directory with source images with trailing slash
+        derivative_dir (str): string representation of full path to directory to save derivatives with trailing slash
+    """
+    source_dir = args.input_directory if args.input_directory.endswith('/') else args.input_directory + '/'
+    derivative_dir = args.output_directory if args.output_directory.endswith('/') else args.output_directory + '/'
+    return source_dir, derivative_dir
 
 def calculate_layers(width, height):
     """Calculates the number of layers based on pixel dimensions.
@@ -76,27 +101,28 @@ def make_filenames(start_directory, end_directory, file):
         original_file (str): concatenated string of original directory and file.
         derivative_file (str): concatenated string of end directory and file.
     """
-    original_file = "{}/{}".format(start_directory, file)
+    original_file = "{}{}".format(start_directory, file)
     fname = file.split(".")[0]
-    derivative_file = "{}/{}.jp2".format(end_directory, fname)
+    derivative_file = "{}{}.jp2".format(end_directory, fname)
     return original_file, derivative_file
 
 def main():
     """Main function, which is run when this script is executed"""
-    parser = get_parser()
-    args = parser.parse_args()
+    source_dir, derivative_dir = clean_directories(args.input_directory, args.output_directory)
     for file in os.listdir(args.input_directory):
-        original_file, derivative_file = make_filenames(args.input_directory, args.output_directory, file)
+        original_file, derivative_file = make_filenames(source_dir, derivative_dir, file)
         if os.path.isfile(derivative_file):
-            print("Derivative file already exists")
+            logging.error("{} already exists".format(derivative_file))
         else:
             if is_tiff(original_file):
                 width, height = get_dimensions(original_file)
                 resolutions = calculate_layers(width, height)
-                os.system("opj_compress -i {} -o {} -n {} {} -SOP".format(
-                    original_file, derivative_file, resolutions, ' '.join(default_options)))
+                cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
+                    original_file, derivative_file, resolutions, ' '.join(default_options))
+                result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
             else:
-                print("Not a valid tiff file")
+                logging.error("{} is not a valid tiff file".format(original_file))
 
 if __name__ == "__main__":
     main()

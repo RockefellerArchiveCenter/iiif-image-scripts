@@ -1,7 +1,9 @@
 import argparse
 import os
 
+from asnake import utils
 from asnake.aspace import ASpace
+
 from configparser import ConfigParser
 from pathlib import Path
 from PIL import Image
@@ -50,19 +52,6 @@ def authorize_as():
         password=config.get("ArchivesSpace", "password"),
     )
 
-def get_ao(refid):
-    """Gets a JSON representation of an archival object.
-
-    Args:
-        refid (str): an ArchivesSpace refid
-    Returns:
-        ao (dict): a JSON representation of an archival object
-    """
-    refs = aspace.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
-    ao_id = refs.get("archival_objects")[0].get("ref")
-    ao = aspace.client.get(ao_id).json()
-    return ao
-
 def get_identifiers(image_dir):
     """Get a list of unique identifiers from files in a directory.
 
@@ -105,15 +94,46 @@ def get_dimensions(file):
         image_width, image_height = img.size
         return image_width, image_height
 
+def get_ao(refid):
+    """Gets a JSON representation of an archival object.
+
+    Args:
+        refid (str): an ArchivesSpace refid
+    Returns:
+        ao (dict): a JSON representation of an archival object
+    """
+    refs = aspace.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
+    ao_id = refs.get("archival_objects")[0].get("ref")
+    ao = aspace.client.get(ao_id).json()
+    return ao
+
+def get_title_date(archival_object):
+    """Gets the closest title and date to an archival object by looking through its
+    ancestors.
+
+    Args:
+        archival_object (dict): a JSON representation of an archival object
+    Returns:
+        title (str): A string representation of of a title.
+        date (str): A string representation of a date expression.
+    """
+    ao_title = utils.find_closest_value(ao, 'title', aspace.client)
+    ao_date = utils.find_closest_value(ao, 'dates', aspace.client)
+    expressions = [date.get('expression') for date in ao_date]
+    ao_date = ', '.join([str(expression) for expression in expressions])
+    return ao_title, ao_date
+
 authorize_as()
 identifiers = get_identifiers(image_dir)
 for ident in identifiers:
     """Sets the overall manifest labels, instantiate the manifest, and then
     creates a sequence in that manifest for a specific identifier.
     """
-    # TO DO: Change Manifest Label to AO Title or inherit closest title
-    manifest_label = ident.title()
+    ao = get_ao(ident)
+    title, date = get_title_date(ao)
+    manifest_label = title.title()
     manifest = fac.manifest(ident=ident, label=manifest_label)
+    manifest.set_metadata({"Date": date})
     seq = manifest.sequence()
     page_number = 0
     files = sorted(get_matching_files(ident, image_dir))

@@ -1,4 +1,5 @@
 import argparse
+import boto3
 import logging
 import math
 import mimetypes
@@ -9,7 +10,10 @@ from pathlib import Path
 from PIL import Image
 from PIL.TiffTags import TAGS
 
-
+s3 = boto3.resource(service_name='s3',
+                    region_name='us-east-1',
+                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                    aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 logfile = 'logfile.log'
 logging.basicConfig(filename=logfile,
@@ -106,6 +110,11 @@ def make_filenames(start_directory, end_directory, file):
     derivative_file = "{}{}.jp2".format(end_directory, fname)
     return original_file, derivative_file
 
+def upload_s3(dir, file, s3_connection):
+    path = "{}{}".format(dir, file)
+    data = open(path, 'rb')
+    s3.meta.client.upload_file(path, 'raciif-dev', file)
+
 def main():
     """Main function, which is run when this script is executed"""
     source_dir, derivative_dir = clean_directories(args.input_directory, args.output_directory)
@@ -121,6 +130,7 @@ def main():
                     original_file, derivative_file, resolutions, ' '.join(default_options))
                 result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                 logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
+                upload_s3(derivative_dir, file, s3)
             else:
                 logging.error("{} is not a valid tiff file".format(original_file))
 

@@ -1,4 +1,5 @@
 import argparse
+import boto3
 import os
 
 from asnake import utils
@@ -12,6 +13,13 @@ from iiif_prezi.factory import ManifestFactory
 
 config = ConfigParser()
 config.read("local_settings.cfg")
+
+
+s3 = boto3.resource(service_name='s3',
+                    region_name='us-east-1',
+                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                    aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
+
 
 def get_parser():
     """Defines and gets parser arguments."""
@@ -151,3 +159,5 @@ for ident in identifiers:
         anno = cvs.annotation()
         img = anno.image("/images/{}".format(file))
     manifest.toFile(compact=False)
+    manifest_file = '{}{}.json'.format(manifest_dir, ident)
+    s3.meta.client.upload_file(manifest_file, 'raciif-dev', 'manifests/{}'.format(ident))

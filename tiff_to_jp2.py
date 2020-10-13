@@ -4,6 +4,7 @@ import logging
 import math
 import mimetypes
 import os
+import re
 import subprocess
 
 from pathlib import Path
@@ -125,8 +126,8 @@ def main():
                     original_file, derivative_file, resolutions, ' '.join(default_options))
                 result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                 logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                filename = derivative_file.split("/")[-1]
-                s3.meta.client.upload_file(derivative_file, 'raciif-dev', filename)
+                identifier = re.split('[/.]', derivative_file)[-2]
+                s3.meta.client.upload_file(derivative_file, 'raciif-dev', identifier)
             else:
                 logging.error("{} is not a valid tiff file".format(original_file))
 

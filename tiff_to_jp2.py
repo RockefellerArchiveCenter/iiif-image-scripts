@@ -114,6 +114,7 @@ def make_filenames(start_directory, end_directory, file):
 def main():
     """Main function, which is run when this script is executed"""
     source_dir, derivative_dir = clean_directories(args.input_directory, args.output_directory)
+    bucket = config.get("S3", "bucketname")
     for file in os.listdir(args.input_directory):
         original_file, derivative_file = make_filenames(source_dir, derivative_dir, file)
         if os.path.isfile(derivative_file):
@@ -127,7 +128,7 @@ def main():
                 result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                 logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
                 identifier = re.split('[/.]', derivative_file)[-2]
-                s3.meta.client.upload_file(derivative_file, 'raciif-dev', identifier)
+                s3.meta.client.upload_file(derivative_file, bucket, identifier)
             else:
                 logging.error("{} is not a valid tiff file".format(original_file))
 

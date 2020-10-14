@@ -143,7 +143,6 @@ fac.set_base_prezi_uri("{}/iiif/prezi/".format(imageurl))
 fac.set_base_image_uri("{}/iiif".format(imageurl))
 
 if authorize_as():
-    print('true')
     identifiers = get_identifiers(image_dir)
     for ident in identifiers:
         """Sets the overall manifest labels, instantiate the manifest, and then

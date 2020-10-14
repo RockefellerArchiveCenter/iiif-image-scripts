@@ -174,6 +174,6 @@ if authorize_as():
             manifest.toFile(compact=False)
             manifest_file = '{}{}.json'.format(manifest_dir, ident)
             logging.info("Created manifest {}.json".format(ident))
-            s3.meta.client.upload_file(manifest_file, bucketname, 'manifests/{}'.format(ident))
+            s3.meta.client.upload_file(manifest_file, bucket, 'manifests/{}'.format(ident))
 else:
     logging.error("Could not create an ArchivesSpace session")

@@ -157,6 +157,7 @@ fac.set_base_image_uri("{}/iiif".format(imageurl))
 
 if authorize_as():
     identifiers = get_identifiers(image_dir)
+    bucket = config.get("S3", "bucketname")
     for ident in identifiers:
         """Sets the overall manifest labels, instantiate the manifest, and then
         creates a sequence in that manifest for a specific identifier.
@@ -189,6 +190,6 @@ if authorize_as():
                 json.dump(v3, file, ensure_ascii=False, indent=4)
             manifest_file = '{}{}.json'.format(manifest_dir, ident)
             logging.info("Created manifest {}.json".format(ident))
-            s3.meta.client.upload_file(manifest_file, 'raciif-dev', 'manifests/{}'.format(ident))
+            s3.meta.client.upload_file(manifest_file, bucket, 'manifests/{}'.format(ident))
 else:
     logging.error("Could not create an ArchivesSpace session")

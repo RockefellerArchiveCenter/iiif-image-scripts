@@ -6,6 +6,7 @@ import os
 
 from asnake import utils
 from asnake.aspace import ASpace
+
 from configparser import ConfigParser
 from iiif_prezi.factory import ManifestFactory
 from iiif_prezi_upgrader import Upgrader
@@ -26,28 +27,19 @@ s3 = boto3.resource(service_name='s3',
                     aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 
+
+s3 = boto3.resource(service_name='s3',
+                    region_name='us-east-1',
+                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                    aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
+
+
 def get_parser():
     """Defines and gets parser arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument("input_dir", help="The full directory path of the jp2 image files (ex. /Documents/images/)")
     parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
     return parser
-
-parser = get_parser()
-args = parser.parse_args()
-fac = ManifestFactory()
-fac.set_debug("error")
-
-def clean_directories(input_dir, output_dir):
-    """Structures input and manifest directories based on whether they end in '/'.
-
-    Args:
-        input_dir (str): string representation of full path to directory with image files.
-        output_dir (str): string representation of full path to directory to save manifests.
-    """
-    image_dir = args.input_dir if args.input_dir.endswith('/') else args.input_dir + '/'
-    manifest_dir = args.output_dir if args.output_dir.endswith('/') else args.output_dir + '/'
-    return image_dir, manifest_dir
 
 parser = get_parser()
 args = parser.parse_args()

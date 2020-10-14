@@ -1,5 +1,6 @@
 import argparse
 import boto3
+import logging
 import os
 
 from asnake import utils
@@ -13,6 +14,10 @@ from iiif_prezi.factory import ManifestFactory
 
 config = ConfigParser()
 config.read("local_settings.cfg")
+
+logfile = 'manifest_log.log'
+logging.basicConfig(filename=logfile,
+                    level=logging.INFO)
 
 
 s3 = boto3.resource(service_name='s3',
@@ -28,6 +33,11 @@ def get_parser():
     parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
     return parser
 
+parser = get_parser()
+args = parser.parse_args()
+fac = ManifestFactory()
+fac.set_debug("error")
+
 def clean_directories(input_dir, output_dir):
     """Structures input and manifest directories based on whether they end in '/'.
 
@@ -39,18 +49,6 @@ def clean_directories(input_dir, output_dir):
     manifest_dir = args.output_dir if args.output_dir.endswith('/') else args.output_dir + '/'
     return image_dir, manifest_dir
 
-parser = get_parser()
-args = parser.parse_args()
-fac = ManifestFactory()
-fac.set_debug("error")
-
-"""Sets directories for use in the manifest creation. Will need to change for dev/production."""
-image_dir, manifest_dir = clean_directories(args.input_dir, args.output_dir)
-fac.set_base_image_dir("/images")
-fac.set_base_prezi_dir(manifest_dir)
-fac.set_base_prezi_uri("http://192.168.50.74:8182/iiif/prezi/")
-fac.set_base_image_uri("http://192.168.50.74:8182/iiif")
-
 def authorize_as():
     """Authorize an ArchivesSpace session."""
     global aspace
@@ -59,6 +57,7 @@ def authorize_as():
         username=config.get("ArchivesSpace", "username"),
         password=config.get("ArchivesSpace", "password"),
     )
+    return aspace
 
 def get_identifiers(image_dir):
     """Get a list of unique identifiers from files in a directory.
@@ -111,9 +110,13 @@ def get_ao(refid):
         ao (dict): a JSON representation of an archival object
     """
     refs = aspace.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
-    ao_id = refs.get("archival_objects")[0].get("ref")
-    ao = aspace.client.get(ao_id).json()
-    return ao
+    if not refs.get("archival_objects"):
+        logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
+        return False
+    else:
+        ao_id = refs.get("archival_objects")[0].get("ref")
+        ao = aspace.client.get(ao_id).json()
+        return ao
 
 def get_title_date(archival_object):
     """Gets the closest title and date to an archival object by looking through its
@@ -131,33 +134,46 @@ def get_title_date(archival_object):
     ao_date = ', '.join([str(expression) for expression in expressions])
     return ao_title, ao_date
 
-authorize_as()
-identifiers = get_identifiers(image_dir)
-for ident in identifiers:
-    """Sets the overall manifest labels, instantiate the manifest, and then
-    creates a sequence in that manifest for a specific identifier.
-    """
-    ao = get_ao(ident)
-    title, date = get_title_date(ao)
-    manifest_label = title.title()
-    manifest = fac.manifest(ident=ident, label=manifest_label)
-    manifest.set_metadata({"Date": date})
-    seq = manifest.sequence()
-    page_number = 0
-    files = sorted(get_matching_files(ident, image_dir))
-    for file in files:
-        """Gets a refid from a file, and then creates a canvas and annotations
-        based on image dimensions and base prezi directories.
+"""Sets directories for use in the manifest creation. Will need to change for dev/production."""
+image_dir, manifest_dir = clean_directories(args.input_dir, args.output_dir)
+imageurl=config.get("ImageServer", "imageurl")
+fac.set_base_image_dir("/images")
+fac.set_base_prezi_dir(manifest_dir)
+fac.set_base_prezi_uri("{}/iiif/prezi/".format(imageurl))
+fac.set_base_image_uri("{}/iiif".format(imageurl))
+
+if authorize_as():
+    print('true')
+    identifiers = get_identifiers(image_dir)
+    for ident in identifiers:
+        """Sets the overall manifest labels, instantiate the manifest, and then
+        creates a sequence in that manifest for a specific identifier.
         """
-        ref = file[:-4]
-        page_number = page_number + 1
-        canvas_label = str(page_number)
-        cvs = seq.canvas(ident=ref, label="Page {}".format(canvas_label))
-        path = "{}{}".format(image_dir, file)
-        width, height = get_dimensions(path)
-        cvs.set_hw(width, height)
-        anno = cvs.annotation()
-        img = anno.image("/images/{}".format(file))
-    manifest.toFile(compact=False)
-    manifest_file = '{}{}.json'.format(manifest_dir, ident)
-    s3.meta.client.upload_file(manifest_file, 'raciif-dev', 'manifests/{}'.format(ident))
+        ao = get_ao(ident)
+        if ao:
+            title, date = get_title_date(ao)
+            manifest_label = title.title()
+            manifest = fac.manifest(ident=ident, label=manifest_label)
+            manifest.set_metadata({"Date": date})
+            seq = manifest.sequence()
+            page_number = 0
+            files = sorted(get_matching_files(ident, image_dir))
+            for file in files:
+                """Gets a refid from a file, and then creates a canvas and annotations
+                based on image dimensions and base prezi directories.
+                """
+                ref = file[:-4]
+                page_number = page_number + 1
+                canvas_label = str(page_number)
+                cvs = seq.canvas(ident=ref, label="Page {}".format(canvas_label))
+                path = "{}{}".format(image_dir, file)
+                width, height = get_dimensions(path)
+                cvs.set_hw(width, height)
+                anno = cvs.annotation()
+                img = anno.image("/images/{}".format(file))
+            manifest.toFile(compact=False)
+            manifest_file = '{}{}.json'.format(manifest_dir, ident)
+            logging.info("Created manifest {}.json".format(ident))
+            s3.meta.client.upload_file(manifest_file, 'raciif-dev', 'manifests/{}'.format(ident))
+else:
+    logging.error("Could not create an ArchivesSpace session")

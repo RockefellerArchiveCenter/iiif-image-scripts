@@ -27,6 +27,10 @@ s3 = boto3.resource(service_name='s3',
                     aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
 
 
+logfile = 'manifest_log.log'
+logging.basicConfig(filename=logfile,
+                    level=logging.INFO)
+
 
 s3 = boto3.resource(service_name='s3',
                     region_name='us-east-1',
@@ -145,10 +149,11 @@ def get_title_date(archival_object):
 
 """Sets directories for use in the manifest creation. Will need to change for dev/production."""
 image_dir, manifest_dir = clean_directories(args.input_dir, args.output_dir)
+imageurl=config.get("ImageServer", "imageurl")
 fac.set_base_image_dir("/images")
 fac.set_base_prezi_dir(manifest_dir)
-fac.set_base_prezi_uri("http://192.168.50.74:8182/iiif/prezi/")
-fac.set_base_image_uri("http://192.168.50.74:8182/iiif")
+fac.set_base_prezi_uri("{}/iiif/prezi/".format(imageurl))
+fac.set_base_image_uri("{}/iiif".format(imageurl))
 
 if authorize_as():
     identifiers = get_identifiers(image_dir)

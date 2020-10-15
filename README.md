@@ -52,7 +52,7 @@ The script will make a logfile named `derivative_log` in the same directory you 
 
 Creates IIIF presentation manifests based on unique ArchivcesSpace refids in an image directory. All files starting with the same ref_id will be added to the manifest as image annotations.
 
-Uses the `IIIF-Prezi` manifest factory to make Presentatino API 2-compliant manifest files.
+Uses the `IIIF-Prezi` manifest factory to make Presentation API 2.1-compliant manifest files.
 
 All manifest files will be pushed to an S3 bucket in the `/manifests/` directory after creation.
 
@@ -78,6 +78,7 @@ This script requires the following architecture and Python libraries to function
   - Boto3
   - IIIF-Prezi
   - Pillow
+  - Python-Magic
 
 ### Usage
 

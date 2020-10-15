@@ -78,7 +78,6 @@ This script requires the following architecture and Python libraries to function
   - Boto3
   - IIIF-Prezi
   - Pillow
-  - Python-Magic
 
 ### Usage
 

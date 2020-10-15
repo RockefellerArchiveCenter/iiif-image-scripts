@@ -201,6 +201,17 @@ class ManifestMaker:
         return img
 
     def set_thumbnail(self, section, identifier, height=None, width=None):
+        """Creates a iiif-compatible thumbnail.
+
+        Args:
+            section (object): A iiif_prezi object to make the thumbnail in.
+            identifier (str): A string identifier to use as the thumbnail id.
+            height (int): Height in pixels of the original image.
+            width (int): Width in pixels of the original image.
+
+        Returns:
+            section (object): An updated iiif_prezi object with thumbnail section.
+        """
         section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))
         section.thumbnail.format = "image/jpeg"
         section.thumbnail.height = 200

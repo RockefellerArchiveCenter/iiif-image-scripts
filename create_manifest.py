@@ -1,7 +1,6 @@
 import argparse
 import boto3
 import logging
-import magic
 import os
 
 from asnake import utils
@@ -28,7 +27,6 @@ class ManifestMaker:
                                  aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
         self.imageurl=config.get("ImageServer", "imageurl")
         self.bucket = config.get("S3", "bucketname")
-        self.mime = magic.Magic(mime=True)
 
     def run(self):
         fac.set_base_prezi_dir(manifest_dir)
@@ -49,15 +47,15 @@ class ManifestMaker:
                     """
                     page_ref = file[:-4]
                     page_number = page_number + 1
-                    width, height, format = self.get_image_info(image_dir, file)
+                    width, height = self.get_image_info(image_dir, file)
                     cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
                     anno = cvs.annotation(ident=page_ref)
-                    self.set_image_data(height, width, page_ref, format, anno)
-                    self.set_image_thumbnail(cvs, page_ref, format)
+                    self.set_image_data(height, width, page_ref, anno)
+                    self.set_thumbnail(cvs, page_ref, height, width)
                 manifest.toFile(compact=False)
                 manifest_file = '{}{}.json'.format(manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
-                self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
+                #self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
 
     def get_identifiers(self, image_dir):
         """Get a list of unique identifiers from files in a directory.
@@ -178,21 +176,18 @@ class ManifestMaker:
         Returns:
             width (int): Pixel width of the image file
             height (int): Pixel height of the image file
-            format (string): MimeType format of the image file
         """
         path = "{}{}".format(image_dir, file)
         width, height = self.get_dimensions(path)
-        format = self.mime.from_file(path)
-        return width, height, format
+        return width, height
 
-    def set_image_data(self, height, width, page_ref, format, annotation):
-        """Sets the image height, width, and format. Creates the image object.
+    def set_image_data(self, height, width, page_ref, annotation):
+        """Sets the image height and width. Creates the image object.
 
         Args:
             height (int): Pixel height of the image
             width (int): Pixel width of the image
             page_ref (string): Reference identifier for the file, including page in filename
-            format (string): MimeType format of the image
             annotation (object): A iiif_prezi annotation object
 
         Returns:
@@ -201,15 +196,15 @@ class ManifestMaker:
         img = annotation.image("/{}/full/max/0/default.jpg".format(page_ref))
         img.height = height
         img.width = width
-        img.format = format
+        img.format = "image/jpeg"
         return img
 
-    def set_image_thumbnail(self, canvas, page_ref, format):
-        canvas.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(page_ref))
-        canvas.thumbnail.format = format
-        canvas.thumbnail.height = 200
-        canvas.thumbnail.width = 200
-        return canvas
+    def set_thumbnail(self, section, identifier, height, width):
+        section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))
+        section.thumbnail.format = "image/jpeg"
+        section.thumbnail.height = 200
+        section.thumbnail.width = int(width / (height / section.thumbnail.height))
+        return section
 
 
 parser = argparse.ArgumentParser(description="Generates IIIF Presentation manifests based on input and output directories")

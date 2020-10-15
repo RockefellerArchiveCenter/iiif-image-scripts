@@ -52,9 +52,8 @@ class ManifestMaker:
                     width, height, format = self.get_image_info(image_dir, file)
                     cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
                     anno = cvs.annotation(ident=page_ref)
-                    img = self.set_image_data(height, width, page_ref, format, anno)
-                    #Add thumbnail generation if we want for each canvas.
-                    #cvs.thumbnail = fac.image(ident=page_ref)
+                    self.set_image_data(height, width, page_ref, format, anno)
+                    self.set_image_thumbnail(cvs, page_ref, format)
                 manifest.toFile(compact=False)
                 manifest_file = '{}{}.json'.format(manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
@@ -204,6 +203,13 @@ class ManifestMaker:
         img.width = width
         img.format = format
         return img
+
+    def set_image_thumbnail(self, canvas, page_ref, format):
+        canvas.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(page_ref))
+        canvas.thumbnail.format = format
+        canvas.thumbnail.height = 200
+        canvas.thumbnail.width = 200
+        return canvas
 
 
 parser = argparse.ArgumentParser(description="Generates IIIF Presentation manifests based on input and output directories")

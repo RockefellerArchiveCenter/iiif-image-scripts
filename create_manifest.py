@@ -41,6 +41,7 @@ class ManifestMaker:
                 manifest = self.set_manifest_data(ident, ao)
                 seq = manifest.sequence(ident="{}.json".format(ident))
                 files = sorted(self.get_matching_files(ident, image_dir))
+                self.set_thumbnail(manifest, files[0].split('.')[0])
                 for file in files:
                     """Gets a refid from a file, and then creates a canvas and annotations
                     based on image dimensions and base prezi directories.
@@ -51,11 +52,11 @@ class ManifestMaker:
                     cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
                     anno = cvs.annotation(ident=page_ref)
                     self.set_image_data(height, width, page_ref, anno)
-                    self.set_thumbnail(cvs, page_ref, height, width)
+                    self.set_thumbnail(cvs, page_ref, height=height, width=width)
                 manifest.toFile(compact=False)
                 manifest_file = '{}{}.json'.format(manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
-                #self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
+                self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
 
     def get_identifiers(self, image_dir):
         """Get a list of unique identifiers from files in a directory.
@@ -199,11 +200,14 @@ class ManifestMaker:
         img.format = "image/jpeg"
         return img
 
-    def set_thumbnail(self, section, identifier, height, width):
+    def set_thumbnail(self, section, identifier, height=None, width=None):
         section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))
         section.thumbnail.format = "image/jpeg"
         section.thumbnail.height = 200
-        section.thumbnail.width = int(width / (height / section.thumbnail.height))
+        if not (height or width):
+            section.thumbnail.width = 200
+        else:
+            section.thumbnail.width = int(width / (height / section.thumbnail.height))
         return section
 
 

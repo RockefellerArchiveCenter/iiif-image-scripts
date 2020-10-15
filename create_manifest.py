@@ -1,6 +1,7 @@
 import argparse
 import boto3
 import logging
+import magic
 import os
 
 from asnake import utils
@@ -11,169 +12,209 @@ from pathlib import Path
 from PIL import Image
 from iiif_prezi.factory import ManifestFactory
 
+class ManifestMaker:
+    def __init__(self, image_dir, manifest_dir, fac):
+        config = ConfigParser()
+        config.read("local_settings.cfg")
+        self.aspace = ASpace(baseurl=config.get("ArchivesSpace", "baseurl"),
+                             username=config.get("ArchivesSpace", "username"),
+                             password=config.get("ArchivesSpace", "password"))
+        logfile = 'manifest_log.log'
+        logging.basicConfig(filename=logfile,
+                            level=logging.INFO)
+        self.s3 = boto3.resource(service_name='s3',
+                                 region_name='us-east-1',
+                                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+                                 aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
+        self.imageurl=config.get("ImageServer", "imageurl")
+        self.bucket = config.get("S3", "bucketname")
+        self.mime = magic.Magic(mime=True)
 
-config = ConfigParser()
-config.read("local_settings.cfg")
+    def run(self):
+        fac.set_base_prezi_dir(manifest_dir)
+        fac.set_base_prezi_uri("{}/manifests/".format(self.imageurl))
+        fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))
 
-logfile = 'manifest_log.log'
-logging.basicConfig(filename=logfile,
-                    level=logging.INFO)
+        identifiers = self.get_identifiers(image_dir)
+        for ident in identifiers:
+            page_number = 0
+            ao = self.get_ao(ident)
+            if ao:
+                manifest = self.set_manifest_data(ident, ao)
+                seq = manifest.sequence(ident="{}.json".format(ident))
+                files = sorted(self.get_matching_files(ident, image_dir))
+                for file in files:
+                    """Gets a refid from a file, and then creates a canvas and annotations
+                    based on image dimensions and base prezi directories.
+                    """
+                    page_ref = file[:-4]
+                    page_number = page_number + 1
+                    width, height, format = self.get_image_info(image_dir, file)
+                    cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
+                    anno = cvs.annotation(ident=page_ref)
+                    img = self.set_image_data(height, width, page_ref, format, anno)
+                    #Add thumbnail generation if we want for each canvas.
+                    #cvs.thumbnail = fac.image(ident=page_ref)
+                manifest.toFile(compact=False)
+                manifest_file = '{}{}.json'.format(manifest_dir, ident)
+                logging.info("Created manifest {}.json".format(ident))
+                self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
+
+    def get_identifiers(self, image_dir):
+        """Get a list of unique identifiers from files in a directory.
+
+        Args:
+            image_dir (str): a string representation of the directory containing image files.
+        Returns:
+            identifiers (lst): a list of unique identifiers.
+        """
+        identifiers = []
+        for file in os.listdir(image_dir):
+            identifier = file.split('_')[0]
+            identifiers.append(identifier)
+        return list(set(identifiers))
+
+    def get_matching_files(self, ident, image_dir):
+        """Get a list of files that start with a specific refid.
+
+        Args:
+            ident (str): a string representation of an ArchivesSpace refid.
+            image_dir (str): a string representation of the directory containing image files.
+        Returns:
+            files (lst): a list of files that matched the identifier.
+        """
+        files = []
+        for file in os.listdir(image_dir):
+            if file.startswith(ident):
+                files.append(file)
+        return files
+
+    def get_dimensions(self, file):
+        """Get the pixel height and width of an image file.
+
+        Args:
+            file (str): an image filename
+        Returns:
+            image_width (int): pixel width of an image
+            image_height (int): pixel height of an image
+        """
+        with Image.open(file) as img:
+            image_width, image_height = img.size
+            return image_width, image_height
+
+    def get_ao(self, refid):
+        """Gets a JSON representation of an archival object.
+
+        Args:
+            refid (str): an ArchivesSpace refid
+        Returns:
+            ao (dict): a JSON representation of an archival object
+        """
+        refs = self.aspace.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
+        if not refs.get("archival_objects"):
+            logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
+            return False
+        else:
+            ao_id = refs.get("archival_objects")[0].get("ref")
+            ao = self.aspace.client.get(ao_id).json()
+            return ao
+
+    def get_title_date(self, archival_object):
+        """Gets the closest title and date to an archival object by looking through its
+        ancestors.
+
+        Args:
+            archival_object (dict): a JSON representation of an archival object
+        Returns:
+            title (str): A string representation of of a title.
+            date (str): A string representation of a date expression.
+        """
+        ao_title = utils.find_closest_value(archival_object, 'title', self.aspace.client)
+        ao_date = utils.find_closest_value(archival_object, 'dates', self.aspace.client)
+        expressions = [date.get('expression') for date in ao_date]
+        ao_date = ', '.join([str(expression) for expression in expressions])
+        return ao_title, ao_date
+
+    def set_manifest_data(self, identifier, archival_object):
+        """Sets the manifest title, date, and instantiates the manifest.
+
+        Args:
+            identifier (str): an ArchivesSpace refid to use for the manifest identifier.
+            archival_object (dict): A JSON representation of an archival object.
+
+        Returns:
+            manifest (dict): a JSON IIIF manifest
+        """
+        title, date = self.get_title_date(archival_object)
+        manifest_label = title.title()
+        manifest = fac.manifest(ident=identifier, label=manifest_label)
+        manifest.set_metadata({"Date": date})
+        return manifest
+
+    def set_canvas_data(self, sequence, ref, page_number, width, height):
+        """Sets canvas information.
+
+        Args:
+            sequence (object): A iiif_prezi factory sequence object.
+            ref (str): string representation of the filename without the extension.
+            page_number (int): Page number for the canvas.
+            width (int): Pixel width of the canvas.
+            height (int): Pixel height of the canvas
+
+        Returns:
+            cvs (object): A iiif_prezi factory canvas object.
+        """
+        canvas_label = str(page_number)
+        cvs = sequence.canvas(ident=ref, label="Page {}".format(canvas_label))
+        cvs.set_hw(height, width)
+        return cvs
+
+    def get_image_info(self, image_dir, file):
+        """Gets information about the image file.
+
+        Args:
+            image_dir (str): path to the directory containing the image file
+            file (str): filename of the image file
+
+        Returns:
+            width (int): Pixel width of the image file
+            height (int): Pixel height of the image file
+            format (string): MimeType format of the image file
+        """
+        path = "{}{}".format(image_dir, file)
+        width, height = self.get_dimensions(path)
+        format = self.mime.from_file(path)
+        return width, height, format
+
+    def set_image_data(self, height, width, page_ref, format, annotation):
+        """Sets the image height, width, and format. Creates the image object.
+
+        Args:
+            height (int): Pixel height of the image
+            width (int): Pixel width of the image
+            page_ref (string): Reference identifier for the file, including page in filename
+            format (string): MimeType format of the image
+            annotation (object): A iiif_prezi annotation object
+
+        Returns:
+            img (object): A iiif_prezi image object with data.
+        """
+        img = annotation.image("/{}/full/max/0/default.jpg".format(page_ref))
+        img.height = height
+        img.width = width
+        img.format = format
+        return img
 
 
-s3 = boto3.resource(service_name='s3',
-                    region_name='us-east-1',
-                    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                    aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
-
-
-def get_parser():
-    """Defines and gets parser arguments."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input_dir", help="The full directory path of the jp2 image files (ex. /Documents/images/)")
-    parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
-    return parser
-
-parser = get_parser()
+parser = argparse.ArgumentParser(description="Generates IIIF Presentation manifests based on input and output directories")
+parser.add_argument("input_dir", help="The full directory path of the jp2 image files (ex. /Documents/images/)")
+parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
 args = parser.parse_args()
+
+image_dir = args.input_dir if args.input_dir.endswith('/') else args.input_dir + '/'
+manifest_dir = args.output_dir if args.output_dir.endswith('/') else args.output_dir + '/'
+
 fac = ManifestFactory()
 fac.set_debug("error")
 
-def clean_directories(input_dir, output_dir):
-    """Structures input and manifest directories based on whether they end in '/'.
-
-    Args:
-        input_dir (str): string representation of full path to directory with image files.
-        output_dir (str): string representation of full path to directory to save manifests.
-    """
-    image_dir = args.input_dir if args.input_dir.endswith('/') else args.input_dir + '/'
-    manifest_dir = args.output_dir if args.output_dir.endswith('/') else args.output_dir + '/'
-    return image_dir, manifest_dir
-
-def authorize_as():
-    """Authorize an ArchivesSpace session."""
-    global aspace
-    aspace = ASpace(
-        baseurl=config.get("ArchivesSpace", "baseurl"),
-        username=config.get("ArchivesSpace", "username"),
-        password=config.get("ArchivesSpace", "password"),
-    )
-    return aspace
-
-def get_identifiers(image_dir):
-    """Get a list of unique identifiers from files in a directory.
-
-    Args:
-        image_dir (str): a string representation of the directory containing image files.
-    Returns:
-        identifiers (lst): a list of unique identifiers.
-    """
-    identifiers = []
-    for file in os.listdir(image_dir):
-        identifier = file.split('_')[0]
-        identifiers.append(identifier)
-    return list(set(identifiers))
-
-def get_matching_files(ident, image_dir):
-    """Get a list of files that start with a specific refid.
-
-    Args:
-        ident (str): a string representation of an ArchivesSpace refid.
-        image_dir (str): a string representation of the directory containing image files.
-    Returns:
-        files (lst): a list of files that matched the identifier.
-    """
-    files = []
-    for file in os.listdir(image_dir):
-        if file.startswith(ident):
-            files.append(file)
-    return files
-
-def get_dimensions(file):
-    """Get the pixel height and width of an image file.
-
-    Args:
-        file (str): an image filename
-    Returns:
-        image_width (int): pixel width of an image
-        image_height (int): pixel height of an image
-    """
-    with Image.open(file) as img:
-        image_width, image_height = img.size
-        return image_width, image_height
-
-def get_ao(refid):
-    """Gets a JSON representation of an archival object.
-
-    Args:
-        refid (str): an ArchivesSpace refid
-    Returns:
-        ao (dict): a JSON representation of an archival object
-    """
-    refs = aspace.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
-    if not refs.get("archival_objects"):
-        logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
-        return False
-    else:
-        ao_id = refs.get("archival_objects")[0].get("ref")
-        ao = aspace.client.get(ao_id).json()
-        return ao
-
-def get_title_date(archival_object):
-    """Gets the closest title and date to an archival object by looking through its
-    ancestors.
-
-    Args:
-        archival_object (dict): a JSON representation of an archival object
-    Returns:
-        title (str): A string representation of of a title.
-        date (str): A string representation of a date expression.
-    """
-    ao_title = utils.find_closest_value(ao, 'title', aspace.client)
-    ao_date = utils.find_closest_value(ao, 'dates', aspace.client)
-    expressions = [date.get('expression') for date in ao_date]
-    ao_date = ', '.join([str(expression) for expression in expressions])
-    return ao_title, ao_date
-
-"""Sets directories for use in the manifest creation. Will need to change for dev/production."""
-image_dir, manifest_dir = clean_directories(args.input_dir, args.output_dir)
-imageurl=config.get("ImageServer", "imageurl")
-fac.set_base_image_dir("/images")
-fac.set_base_prezi_dir(manifest_dir)
-fac.set_base_prezi_uri("{}/iiif/prezi/".format(imageurl))
-fac.set_base_image_uri("{}/iiif".format(imageurl))
-
-if authorize_as():
-    identifiers = get_identifiers(image_dir)
-    bucket = config.get("S3", "bucketname")
-    for ident in identifiers:
-        """Sets the overall manifest labels, instantiate the manifest, and then
-        creates a sequence in that manifest for a specific identifier.
-        """
-        ao = get_ao(ident)
-        if ao:
-            title, date = get_title_date(ao)
-            manifest_label = title.title()
-            manifest = fac.manifest(ident=ident, label=manifest_label)
-            manifest.set_metadata({"Date": date})
-            seq = manifest.sequence()
-            page_number = 0
-            files = sorted(get_matching_files(ident, image_dir))
-            for file in files:
-                """Gets a refid from a file, and then creates a canvas and annotations
-                based on image dimensions and base prezi directories.
-                """
-                ref = file[:-4]
-                page_number = page_number + 1
-                canvas_label = str(page_number)
-                cvs = seq.canvas(ident=ref, label="Page {}".format(canvas_label))
-                path = "{}{}".format(image_dir, file)
-                width, height = get_dimensions(path)
-                cvs.set_hw(width, height)
-                anno = cvs.annotation()
-                img = anno.image("/images/{}".format(file))
-            manifest.toFile(compact=False)
-            manifest_file = '{}{}.json'.format(manifest_dir, ident)
-            logging.info("Created manifest {}.json".format(ident))
-            s3.meta.client.upload_file(manifest_file, bucket, 'manifests/{}'.format(ident))
-else:
-    logging.error("Could not create an ArchivesSpace session")
+ManifestMaker(image_dir, manifest_dir, fac).run()

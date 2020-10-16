@@ -69,6 +69,13 @@ This script requires a `local_settings.cfg` file with the following sections and
 - `[S3]`
   - `bucketname` (the name of the S3 bucket you are pushing data to)
 
+Update any hardcoded URLs to point to the proper image and manifest storage locations. You may have to update the following lines.
+
+  - `fac.set_base_prezi_uri("{}/manifests/".format(self.imageurl))`
+  - `fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))`
+  - `img = annotation.image("/{}/full/max/0/default.jpg".format(page_ref))`
+  - `section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))`
+
 ### Requires
 
 This script requires the following architecture and Python libraries to function correctly.

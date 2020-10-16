@@ -5,18 +5,6 @@ Repository for the RAC's iiif imaging scripts (derivative and manifest creation)
 
 This script reads through tif files in a directory and uses OpenJPEG to convert them to jp2 files. After converting each file it will push it to an AWS S3 bucket.
 
-### Setup
-
-This script requires a `local_settings.cfg` file with the following sections and keys.
-
-- `[S3]`
-  - `bucketname` (the name of the S3 bucket you are pushing data to)
-
-This scrip requires two environment variables to run correctly and push files to S3. Get this information from your AWS console.
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-
 ### Requires
 
 This script requires the following architecture and Python libraries to function correctly.
@@ -28,6 +16,18 @@ This script requires the following architecture and Python libraries to function
 Additionally, this script requires the following to be installed on your system.
 - [OpenJPEG](https://github.com/uclouvain/openjpeg/blob/master/INSTALL.md)
   - You may have to install the libtiff library on your system depending on your environment.
+
+### Setup
+
+This script requires a `local_settings.cfg` file with the following sections and keys.
+
+- `[S3]`
+  - `bucketname` (the name of the S3 bucket you are pushing data to)
+
+This scrip requires two environment variables to run correctly and push files to S3. Get this information from your AWS console.
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 
 ### Usage
 
@@ -56,6 +56,16 @@ Uses the `IIIF-Prezi` manifest factory to make Presentation API 2.1-compliant ma
 
 All manifest files will be pushed to an S3 bucket in the `/manifests/` directory after creation.
 
+### Requires
+
+This script requires the following architecture and Python libraries to function correctly.
+
+  - Python3
+  - ArchivesSnake
+  - Boto3
+  - IIIF-Prezi
+  - Pillow
+
 ### Setup
 
 This script requires a `local_settings.cfg` file with the following sections and keys.
@@ -75,16 +85,6 @@ Update any hardcoded URLs to point to the proper image and manifest storage loca
   - `fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))`
   - `img = annotation.image("/{}/full/max/0/default.jpg".format(page_ref))`
   - `section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))`
-
-### Requires
-
-This script requires the following architecture and Python libraries to function correctly.
-
-  - Python3
-  - ArchivesSnake
-  - Boto3
-  - IIIF-Prezi
-  - Pillow
 
 ### Usage
 

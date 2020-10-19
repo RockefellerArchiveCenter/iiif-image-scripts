@@ -15,9 +15,10 @@ class ManifestMaker:
     def __init__(self, image_dir, manifest_dir, fac):
         config = ConfigParser()
         config.read("local_settings.cfg")
-        self.aspace = ASpace(baseurl=config.get("ArchivesSpace", "baseurl"),
+        self.client = ASpace(baseurl=config.get("ArchivesSpace", "baseurl"),
                              username=config.get("ArchivesSpace", "username"),
-                             password=config.get("ArchivesSpace", "password"))
+                             password=config.get("ArchivesSpace", "password"),
+                             repository=config.get("ArchivesSpace", "repository")).client
         logfile = 'manifest_log.log'
         logging.basicConfig(filename=logfile,
                             level=logging.INFO)
@@ -48,11 +49,12 @@ class ManifestMaker:
                     """
                     page_ref = file[:-4]
                     page_number = page_number + 1
-                    width, height = self.get_image_info(image_dir, file)
+                    width, height, path = self.get_image_info(image_dir, file)
                     cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
                     anno = cvs.annotation(ident=page_ref)
                     self.set_image_data(height, width, page_ref, anno)
                     self.set_thumbnail(cvs, page_ref, height=height, width=width)
+                    os.remove(path)
                 manifest.toFile(compact=False)
                 manifest_file = '{}{}.json'.format(manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
@@ -66,10 +68,7 @@ class ManifestMaker:
         Returns:
             identifiers (lst): a list of unique identifiers.
         """
-        identifiers = []
-        for file in os.listdir(image_dir):
-            identifier = file.split('_')[0]
-            identifiers.append(identifier)
+        identifiers = [file.split('_')[0] for file in os.listdir(image_dir)]
         return list(set(identifiers))
 
     def get_matching_files(self, ident, image_dir):
@@ -81,10 +80,7 @@ class ManifestMaker:
         Returns:
             files (lst): a list of files that matched the identifier.
         """
-        files = []
-        for file in os.listdir(image_dir):
-            if file.startswith(ident):
-                files.append(file)
+        files = [file for file in os.listdir(image_dir) if file.startswith(ident)]
         return files
 
     def get_dimensions(self, file):
@@ -108,13 +104,13 @@ class ManifestMaker:
         Returns:
             ao (dict): a JSON representation of an archival object
         """
-        refs = self.aspace.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
+        refs = self.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
         if not refs.get("archival_objects"):
             logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
             return False
         else:
             ao_id = refs.get("archival_objects")[0].get("ref")
-            ao = self.aspace.client.get(ao_id).json()
+            ao = self.client.get(ao_id).json()
             return ao
 
     def get_title_date(self, archival_object):
@@ -127,8 +123,8 @@ class ManifestMaker:
             title (str): A string representation of of a title.
             date (str): A string representation of a date expression.
         """
-        ao_title = utils.find_closest_value(archival_object, 'title', self.aspace.client)
-        ao_date = utils.find_closest_value(archival_object, 'dates', self.aspace.client)
+        ao_title = utils.find_closest_value(archival_object, 'title', self.client)
+        ao_date = utils.find_closest_value(archival_object, 'dates', self.client)
         expressions = [date.get('expression') for date in ao_date]
         ao_date = ', '.join([str(expression) for expression in expressions])
         return ao_title, ao_date
@@ -177,10 +173,11 @@ class ManifestMaker:
         Returns:
             width (int): Pixel width of the image file
             height (int): Pixel height of the image file
+            path (str): Concatenated path to the source image file.
         """
         path = "{}{}".format(image_dir, file)
         width, height = self.get_dimensions(path)
-        return width, height
+        return width, height, path
 
     def set_image_data(self, height, width, page_ref, annotation):
         """Sets the image height and width. Creates the image object.
@@ -223,7 +220,7 @@ class ManifestMaker:
 
 
 parser = argparse.ArgumentParser(description="Generates IIIF Presentation manifests based on input and output directories")
-parser.add_argument("input_dir", help="The full directory path of the jp2 image files (ex. /Documents/images/)")
+parser.add_argument("input_dir", help="The full path to the directory containing jp2 image files (ex. /Documents/images/)")
 parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
 args = parser.parse_args()
 

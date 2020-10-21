@@ -13,7 +13,7 @@ from PIL import Image
 from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
-    def __init__(self, source_dir, derivative_dir):
+    def __init__(self, source_dir, derivative_dir, skip):
         config = ConfigParser()
         config.read("local_settings.cfg")
         self.s3 = boto3.resource(service_name='s3',
@@ -32,22 +32,27 @@ class DerivativeMaker:
                            ]
 
     def run(self):
-        for file in os.listdir(source_dir):
-            original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file)
-            identifier = re.split('[/.]', derivative_file)[-2]
-            if os.path.isfile(derivative_file):
-                logging.error("{} already exists".format(derivative_file))
-            else:
-                if self.is_tiff(original_file):
-                    width, height = self.get_dimensions(original_file)
-                    resolutions = self.calculate_layers(width, height)
-                    cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                        original_file, derivative_file, resolutions, ' '.join(self.default_options))
-                    result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
-                    logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                    s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
+        files = [file for file in os.listdir(source_dir)]
+        if skip is not None:
+            for file in files:
+                if file.split('.')[0].endswith('_001'):
+                    files.remove(file)
+        for file in files:
+                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file)
+                identifier = re.split('[/.]', derivative_file)[-2]
+                if os.path.isfile(derivative_file):
+                    logging.error("{} already exists".format(derivative_file))
                 else:
-                    logging.error("{} is not a valid tiff file".format(original_file))
+                    if self.is_tiff(original_file):
+                        width, height = self.get_dimensions(original_file)
+                        resolutions = self.calculate_layers(width, height)
+                        cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
+                            original_file, derivative_file, resolutions, ' '.join(self.default_options))
+                        result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                        logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
+                        s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
+                    else:
+                        logging.error("{} is not a valid tiff file".format(original_file))
 
     def make_filenames(self, start_directory, end_directory, file):
         """Make derivative filenames based on original filenames.
@@ -111,9 +116,11 @@ class DerivativeMaker:
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
 parser.add_argument("input_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
 parser.add_argument("output_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
+parser.add_argument("--skip", help="Skips the first file for each identifier.")
 args = parser.parse_args()
 
 source_dir = args.input_directory if args.input_directory.endswith('/') else args.input_directory + '/'
 derivative_dir = args.output_directory if args.output_directory.endswith('/') else args.output_directory + '/'
+skip = args.skip
 
-DerivativeMaker(source_dir, derivative_dir).run()
+DerivativeMaker(source_dir, derivative_dir, skip).run()

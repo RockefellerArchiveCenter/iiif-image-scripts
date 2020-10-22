@@ -7,38 +7,27 @@ import os
 import re
 import subprocess
 
-from configparser import ConfigParser
 from pathlib import Path
 from PIL import Image
 from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
-    def __init__(self, source_dir, derivative_dir, skip):
-        config = ConfigParser()
-        config.read("local_settings.cfg")
-        self.s3 = boto3.resource(service_name='s3',
-                                 region_name='us-east-1',
-                                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                                 aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
-        logfile = 'derivative_log.log'
-        logging.basicConfig(filename=logfile,
-                            level=logging.INFO)
-        self.bucket = config.get("S3", "bucketname")
-        self.default_options = [
-                           "-r 1.5",
-                           "-c [256,256],[256,256],[128,128]",
-                           "-b 64,64",
-                           "-p RPCL"
-                           ]
+    def __init__(self, source_dir, derivative_dir, skip, s3, bucket, default_options):
+        self.source_dir = source_dir
+        self.derivative_dir = derivative_dir
+        self.skip = skip
+        self.s3 = s3
+        self.bucket = bucket
+        self.default_options = default_options
 
     def run(self):
-        files = [file for file in os.listdir(source_dir)]
-        if skip is not None:
+        files = [file for file in os.listdir(self.source_dir)]
+        if self.skip is not None:
             for file in files:
                 if file.split('.')[0].endswith('_001'):
                     files.remove(file)
         for file in files:
-                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file)
+                original_file, derivative_file = self.make_filenames(self.source_dir, self.derivative_dir, file)
                 identifier = re.split('[/.]', derivative_file)[-2]
                 if os.path.isfile(derivative_file):
                     logging.error("{} already exists".format(derivative_file))
@@ -50,7 +39,7 @@ class DerivativeMaker:
                             original_file, derivative_file, resolutions, ' '.join(self.default_options))
                         result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                         logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                        s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
+                        #s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
                     else:
                         logging.error("{} is not a valid tiff file".format(original_file))
 
@@ -112,15 +101,3 @@ class DerivativeMaker:
             return True
         else:
             return False
-
-parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
-parser.add_argument("input_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
-parser.add_argument("output_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
-parser.add_argument("--skip", help="Skips the first file for each identifier.")
-args = parser.parse_args()
-
-source_dir = args.input_directory if args.input_directory.endswith('/') else args.input_directory + '/'
-derivative_dir = args.output_directory if args.output_directory.endswith('/') else args.output_directory + '/'
-skip = args.skip
-
-DerivativeMaker(source_dir, derivative_dir, skip).run()

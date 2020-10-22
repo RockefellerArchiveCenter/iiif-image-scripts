@@ -12,36 +12,26 @@ from PIL import Image
 from iiif_prezi.factory import ManifestFactory
 
 class ManifestMaker:
-    def __init__(self, image_dir, manifest_dir, fac):
-        config = ConfigParser()
-        config.read("local_settings.cfg")
-        self.client = ASpace(baseurl=config.get("ArchivesSpace", "baseurl"),
-                             username=config.get("ArchivesSpace", "username"),
-                             password=config.get("ArchivesSpace", "password"),
-                             repository=config.get("ArchivesSpace", "repository")).client
-        logfile = 'manifest_log.log'
-        logging.basicConfig(filename=logfile,
-                            level=logging.INFO)
-        self.s3 = boto3.resource(service_name='s3',
-                                 region_name='us-east-1',
-                                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                                 aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
-        self.imageurl=config.get("ImageServer", "imageurl")
-        self.bucket = config.get("S3", "bucketname")
+    def __init__(self, image_dir, manifest_dir, imageurl, fac, client):
+        self.image_dir = image_dir
+        self.manifest_dir = manifest_dir
+        self.fac = fac
+        self.client = client
+        self.imageurl = imageurl
 
     def run(self):
-        fac.set_base_prezi_dir(manifest_dir)
-        fac.set_base_prezi_uri("{}/manifests/".format(self.imageurl))
-        fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))
+        self.fac.set_base_prezi_dir(self.manifest_dir)
+        self.fac.set_base_prezi_uri("{}/manifests/".format(self.imageurl))
+        self.fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))
 
-        identifiers = self.get_identifiers(image_dir)
+        identifiers = self.get_identifiers(self.image_dir)
         for ident in identifiers:
             page_number = 0
             ao = self.get_ao(ident)
             if ao:
                 manifest = self.set_manifest_data(ident, ao)
                 seq = manifest.sequence(ident="{}.json".format(ident))
-                files = sorted(self.get_matching_files(ident, image_dir))
+                files = sorted(self.get_matching_files(ident, self.image_dir))
                 self.set_thumbnail(manifest, files[0].split('.')[0])
                 for file in files:
                     """Gets a refid from a file, and then creates a canvas and annotations
@@ -49,16 +39,16 @@ class ManifestMaker:
                     """
                     page_ref = file[:-4]
                     page_number = page_number + 1
-                    width, height, path = self.get_image_info(image_dir, file)
+                    width, height, path = self.get_image_info(self.image_dir, file)
                     cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
                     anno = cvs.annotation(ident=page_ref)
                     self.set_image_data(height, width, page_ref, anno)
                     self.set_thumbnail(cvs, page_ref, height=height, width=width)
                     os.remove(path)
                 manifest.toFile(compact=False)
-                manifest_file = '{}{}.json'.format(manifest_dir, ident)
+                manifest_file = '{}{}.json'.format(self.manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
-                self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
+                #self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
 
     def get_identifiers(self, image_dir):
         """Get a list of unique identifiers from files in a directory.
@@ -68,7 +58,7 @@ class ManifestMaker:
         Returns:
             identifiers (lst): a list of unique identifiers.
         """
-        identifiers = [file.split('_')[0] for file in os.listdir(image_dir)]
+        identifiers = [file.split('_')[0] for file in os.listdir(self.image_dir)]
         return list(set(identifiers))
 
     def get_matching_files(self, ident, image_dir):
@@ -80,7 +70,7 @@ class ManifestMaker:
         Returns:
             files (lst): a list of files that matched the identifier.
         """
-        files = [file for file in os.listdir(image_dir) if file.startswith(ident)]
+        files = [file for file in os.listdir(self.image_dir) if file.startswith(ident)]
         return files
 
     def get_dimensions(self, file):
@@ -141,7 +131,7 @@ class ManifestMaker:
         """
         title, date = self.get_title_date(archival_object)
         manifest_label = title.title()
-        manifest = fac.manifest(ident=identifier, label=manifest_label)
+        manifest = self.fac.manifest(ident=identifier, label=manifest_label)
         manifest.set_metadata({"Date": date})
         return manifest
 
@@ -175,7 +165,7 @@ class ManifestMaker:
             height (int): Pixel height of the image file
             path (str): Concatenated path to the source image file.
         """
-        path = "{}{}".format(image_dir, file)
+        path = "{}{}".format(self.image_dir, file)
         width, height = self.get_dimensions(path)
         return width, height, path
 
@@ -209,7 +199,7 @@ class ManifestMaker:
         Returns:
             section (object): An updated iiif_prezi object with thumbnail section.
         """
-        section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))
+        section.thumbnail = self.fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))
         section.thumbnail.format = "image/jpeg"
         section.thumbnail.height = 200
         if not (height or width):
@@ -217,17 +207,3 @@ class ManifestMaker:
         else:
             section.thumbnail.width = int(width / (height / section.thumbnail.height))
         return section
-
-
-parser = argparse.ArgumentParser(description="Generates IIIF Presentation manifests based on input and output directories")
-parser.add_argument("input_dir", help="The full path to the directory containing jp2 image files (ex. /Documents/images/)")
-parser.add_argument("output_dir", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
-args = parser.parse_args()
-
-image_dir = args.input_dir if args.input_dir.endswith('/') else args.input_dir + '/'
-manifest_dir = args.output_dir if args.output_dir.endswith('/') else args.output_dir + '/'
-
-fac = ManifestFactory()
-fac.set_debug("error")
-
-ManifestMaker(image_dir, manifest_dir, fac).run()

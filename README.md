@@ -35,6 +35,10 @@ The script takes two arguments: an input directory and an output directory. The 
 
 `python3 tiff_to_jp2.py /path/to/tif/files/ /path/to/output/directory/`
 
+There is an optional `--skip` argument that you can pass to skip converting files ending in `_001`. This assumes that `_001` will be a target page that does not need to be converted for discovery.
+
+`python3 tiff_to_jp2.py /path/to/tif/files/ /path/to/output/directory/ --skip True`
+
 #### Default Settings
 
 The following default options for OpenJPEG have been set:

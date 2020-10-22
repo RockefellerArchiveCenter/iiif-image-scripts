@@ -1,0 +1,32 @@
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/.DS_Store is not a valid tiff file
+INFO:root:  tile number 1 / 1  Generated outfile /Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 encode time: 2664 ms  
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+INFO:root:  tile number 1 / 1  Generated outfile /Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 encode time: 2643 ms  
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+INFO:root:  tile number 1 / 1  Generated outfile /Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 encode time: 2661 ms  
+ERROR:root:Could not find an ArchivesSpace object matching refid: .DS
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 already exists
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 already exists
+ERROR:root:Could not find an ArchivesSpace object matching refid: .DS
+INFO:root:Created manifest f430dec48d764f218c2147a846e28704.json
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 already exists
+ERROR:root:Could not find an ArchivesSpace object matching refid: f430dec48d764f218c2147a846e28704.json
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 already exists
+ERROR:root:Could not find an ArchivesSpace object matching refid: .DS
+INFO:root:Created manifest f430dec48d764f218c2147a846e28704.json
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 already exists
+INFO:root:Created manifest f430dec48d764f218c2147a846e28704.json
+ERROR:root:Could not find an ArchivesSpace object matching refid: .DS
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 already exists
+ERROR:root:Could not find an ArchivesSpace object matching refid: .DS
+INFO:root:Created manifest f430dec48d764f218c2147a846e28704.json
+ERROR:root:/Users/pgalligan/Desktop/image_compression/test/.DS_Store is not a valid tiff file
+INFO:root:  tile number 1 / 1  Generated outfile /Users/pgalligan/Desktop/image_compression/test2/f430dec48d764f218c2147a846e28704_068.jp2 encode time: 2623 ms  
+INFO:root:Created manifest f430dec48d764f218c2147a846e28704.json
+ERROR:root:Could not find an ArchivesSpace object matching refid: .DS

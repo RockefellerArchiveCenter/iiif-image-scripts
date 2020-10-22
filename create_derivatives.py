@@ -1,4 +1,3 @@
-import argparse
 import boto3
 import logging
 import math
@@ -19,6 +18,9 @@ class DerivativeMaker:
         self.s3 = s3
         self.bucket = bucket
         self.default_options = default_options
+        logfile = 'derivative_log.log'
+        logging.basicConfig(filename=logfile,
+                            level=logging.INFO)
 
     def run(self):
         files = [file for file in os.listdir(self.source_dir)]
@@ -39,7 +41,7 @@ class DerivativeMaker:
                             original_file, derivative_file, resolutions, ' '.join(self.default_options))
                         result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                         logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                        #s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
+                        s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
                     else:
                         logging.error("{} is not a valid tiff file".format(original_file))
 

@@ -1,23 +1,23 @@
-import argparse
 import boto3
 import logging
 import os
 
 from asnake import utils
-from asnake.aspace import ASpace
-
-from configparser import ConfigParser
 from pathlib import Path
 from PIL import Image
-from iiif_prezi.factory import ManifestFactory
 
 class ManifestMaker:
-    def __init__(self, image_dir, manifest_dir, imageurl, fac, client):
+    def __init__(self, image_dir, manifest_dir, imageurl, fac, client, s3, bucket):
         self.image_dir = image_dir
         self.manifest_dir = manifest_dir
         self.fac = fac
         self.client = client
         self.imageurl = imageurl
+        self.s3 = s3
+        self.bucket = bucket
+        logfile = 'manifest_log.log'
+        logging.basicConfig(filename=logfile,
+                            level=logging.INFO)
 
     def run(self):
         self.fac.set_base_prezi_dir(self.manifest_dir)
@@ -48,7 +48,7 @@ class ManifestMaker:
                 manifest.toFile(compact=False)
                 manifest_file = '{}{}.json'.format(self.manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
-                #self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
+                self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
 
     def get_identifiers(self, image_dir):
         """Get a list of unique identifiers from files in a directory.

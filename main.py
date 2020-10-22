@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF
 parser.add_argument("source_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
 parser.add_argument("derivative_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
 parser.add_argument("manifest_directory", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
-parser.add_argument("--skip", help="Skips the first file for each identifier.")
+parser.add_argument("--skip", help="Skips files ending in `_001` during derivative creation.")
 args = parser.parse_args()
 
 class RunProcesses:
@@ -52,7 +52,13 @@ class RunProcesses:
                                       self.bucket,
                                       self.default_options)
         derivatives.run()
+        manifests = ManifestMaker(self.derivative_dir,
+                                  self.manifest_dir,
+                                  self.imageurl,
+                                  self.fac,
+                                  self.client,
+                                  self.s3,
+                                  self.bucket)
+        manifests.run()
 
-#manifests = ManifestMaker(derivative_dir, manifest_dir, imageurl, fac, client)
-#manifests.run()
 RunProcesses(args.source_directory, args.derivative_directory, args.manifest_directory, args.skip).run()

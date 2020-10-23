@@ -1,4 +1,3 @@
-import boto3
 import logging
 import math
 import mimetypes
@@ -11,25 +10,21 @@ from PIL import Image
 from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
-    def __init__(self, source_dir, derivative_dir, skip, s3, bucket, default_options):
-        self.source_dir = source_dir
-        self.derivative_dir = derivative_dir
-        self.skip = skip
-        self.s3 = s3
-        self.bucket = bucket
-        self.default_options = default_options
-        logfile = 'derivative_log.log'
-        logging.basicConfig(filename=logfile,
-                            level=logging.INFO)
 
-    def run(self):
-        files = [file for file in os.listdir(self.source_dir)]
-        if self.skip is not None:
+    def run(self, source_dir, derivative_dir, skip):
+        default_options = ["-r 1.5",
+                           "-c [256,256],[256,256],[128,128]",
+                           "-b 64,64",
+                           "-p RPCL"
+                           ]
+
+        files = [file for file in os.listdir(source_dir)]
+        if skip is not None:
             for file in files:
                 if file.split('.')[0].endswith('_001'):
                     files.remove(file)
         for file in files:
-                original_file, derivative_file = self.make_filenames(self.source_dir, self.derivative_dir, file)
+                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file)
                 identifier = re.split('[/.]', derivative_file)[-2]
                 if os.path.isfile(derivative_file):
                     logging.error("{} already exists".format(derivative_file))
@@ -38,10 +33,9 @@ class DerivativeMaker:
                         width, height = self.get_dimensions(original_file)
                         resolutions = self.calculate_layers(width, height)
                         cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                            original_file, derivative_file, resolutions, ' '.join(self.default_options))
+                            original_file, derivative_file, resolutions, ' '.join(default_options))
                         result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                         logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                        s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
                     else:
                         logging.error("{} is not a valid tiff file".format(original_file))
 
@@ -56,9 +50,9 @@ class DerivativeMaker:
             original_file (str): concatenated string of original directory and file.
             derivative_file (str): concatenated string of end directory and file.
         """
-        original_file = "{}{}".format(start_directory, file)
+        original_file = "{}/{}".format(start_directory, file)
         fname = file.split(".")[0]
-        derivative_file = "{}{}.jp2".format(end_directory, fname)
+        derivative_file = "{}/{}.jp2".format(end_directory, fname)
         return original_file, derivative_file
 
     def get_dimensions(self, file):

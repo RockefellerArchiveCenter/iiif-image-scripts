@@ -1,24 +1,25 @@
 import argparse
 import boto3
 import logging
+import magic
 import os
 
-from asnake.aspace import ASpace
+from botocore.exceptions import ClientError
 from configparser import ConfigParser
 from create_derivatives import DerivativeMaker
 from create_manifest import ManifestMaker
-from iiif_prezi.factory import ManifestFactory
 
 
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
 parser.add_argument("source_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
-parser.add_argument("derivative_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
-parser.add_argument("manifest_directory", help="The full directory path to store manifest files in (ex. /Documents/manifests/)")
 parser.add_argument("--skip", help="Skips files ending in `_001` during derivative creation.")
 args = parser.parse_args()
 
-class RunProcesses:
-    def __init__(self, source_directory, derivative_directory, manifest_directory, skip):
+class GenerateFiles:
+    def __init__(self):
+        logfile = 'iiif_generation.log'
+        logging.basicConfig(filename=logfile,
+                            level=logging.INFO)
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
         self.s3 = boto3.resource(service_name='s3',
@@ -26,39 +27,50 @@ class RunProcesses:
                             aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
                             aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
         self.bucket = self.config.get("S3", "bucketname")
-        self.client = ASpace(baseurl=self.config.get("ArchivesSpace", "baseurl"),
-                        username=self.config.get("ArchivesSpace", "username"),
-                        password=self.config.get("ArchivesSpace", "password"),
-                        repository=self.config.get("ArchivesSpace", "repository")).client
-        self.imageurl=self.config.get("ImageServer", "imageurl")
-        self.default_options = [
-                           "-r 1.5",
-                           "-c [256,256],[256,256],[128,128]",
-                           "-b 64,64",
-                           "-p RPCL"
-                           ]
-        self.fac = ManifestFactory()
-        self.fac.set_debug("error")
-        self.source_dir = source_directory if source_directory.endswith('/') else source_directory + '/'
-        self.derivative_dir = derivative_directory if derivative_directory.endswith('/') else derivative_directory + '/'
-        self.manifest_dir = manifest_directory if manifest_directory.endswith('/') else manifest_directory + '/'
-        self.skip = skip
 
-    def run(self):
-        derivatives = DerivativeMaker(self.source_dir,
-                                      self.derivative_dir,
-                                      self.skip,
-                                      self.s3,
-                                      self.bucket,
-                                      self.default_options)
-        derivatives.run()
-        manifests = ManifestMaker(self.derivative_dir,
-                                  self.manifest_dir,
-                                  self.imageurl,
-                                  self.fac,
-                                  self.client,
-                                  self.s3,
-                                  self.bucket)
-        manifests.run()
+    def run(self, source_directory, skip):
+        source_dir = source_directory if source_directory.endswith('/') else source_directory + '/'
+        derivative_dir = "{}{}".format(source_dir, "images")
+        manifest_dir = "{}{}".format(source_dir, "manifests")
+        for x in [derivative_dir, manifest_dir]:
+            if not os.path.exists(x):
+                os.mkdir(x)
+        excluded_directories = set([source_dir,
+                                    "{}{}".format(source_dir, "images"),
+                                    "{}{}".format(source_dir, "manifests")])
+        directories = [x[0] for x in os.walk(source_dir) if x[0] not in excluded_directories]
+        derivatives = DerivativeMaker()
+        manifests = ManifestMaker()
+        for directory in directories:
+            derivatives.run(directory, derivative_dir, skip)
+            manifests.run(derivative_dir, manifest_dir)
+        self.upload_s3(derivative_dir, manifest_dir)
 
-RunProcesses(args.source_directory, args.derivative_directory, args.manifest_directory, args.skip).run()
+    def upload_s3(self, derivative_dir, manifest_dir):
+        for dir in [derivative_dir, manifest_dir]:
+            for file in os.listdir(dir):
+                if not file.startswith('.'):
+                    key = file.split(".")[0]
+                    if self.s3_check(key, dir):
+                        logging.error("{} already exists in {}".format(key, self.bucket))
+                    else:
+                        if file.endswith(".json"):
+                            type = "application/json"
+                        else:
+                            type = magic.from_file("{}/{}".format(dir, file), mime=True)
+                        self.s3.meta.client.upload_file('{}/{}'.format(dir, file),
+                                                        self.bucket, '{}/{}'.format(dir.split("/")[-1], key),
+                                                        ExtraArgs={'ContentType': type})
+
+    def s3_check(self, key, dir):
+        try:
+            self.s3.Object(self.bucket, '{}/{}'.format(dir.split("/")[-1], key)).load()
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                return False
+            else:
+                print(e)
+
+
+GenerateFiles().run(args.source_directory, args.skip)

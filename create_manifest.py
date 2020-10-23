@@ -1,37 +1,41 @@
-import boto3
 import logging
 import os
 
 from asnake import utils
+from asnake.aspace import ASpace
+from configparser import ConfigParser
+from iiif_prezi.factory import ManifestFactory
 from pathlib import Path
 from PIL import Image
 
 class ManifestMaker:
-    def __init__(self, image_dir, manifest_dir, imageurl, fac, client, s3, bucket):
-        self.image_dir = image_dir
-        self.manifest_dir = manifest_dir
-        self.fac = fac
-        self.client = client
-        self.imageurl = imageurl
-        self.s3 = s3
-        self.bucket = bucket
-        logfile = 'manifest_log.log'
-        logging.basicConfig(filename=logfile,
-                            level=logging.INFO)
+    
+    def __init__(self):
+        self.config = ConfigParser()
+        self.config.read("local_settings.cfg")
+        self.client = ASpace(baseurl=self.config.get("ArchivesSpace", "baseurl"),
+                        username=self.config.get("ArchivesSpace", "username"),
+                        password=self.config.get("ArchivesSpace", "password"),
+                        repository=self.config.get("ArchivesSpace", "repository")).client
 
-    def run(self):
-        self.fac.set_base_prezi_dir(self.manifest_dir)
-        self.fac.set_base_prezi_uri("{}/manifests/".format(self.imageurl))
-        self.fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))
+        self.fac = ManifestFactory()
 
-        identifiers = self.get_identifiers(self.image_dir)
+    def run(self, image_dir, manifest_dir):
+        imageurl=self.config.get("ImageServer", "imageurl")
+
+        self.fac.set_debug("error")
+        self.fac.set_base_prezi_dir(manifest_dir)
+        self.fac.set_base_prezi_uri("{}/manifests/".format(imageurl))
+        self.fac.set_base_image_uri("{}/iiif/2/images/".format(imageurl))
+
+        identifiers = self.get_identifiers(image_dir)
         for ident in identifiers:
             page_number = 0
             ao = self.get_ao(ident)
             if ao:
                 manifest = self.set_manifest_data(ident, ao)
                 seq = manifest.sequence(ident="{}.json".format(ident))
-                files = sorted(self.get_matching_files(ident, self.image_dir))
+                files = sorted(self.get_matching_files(ident, image_dir))
                 self.set_thumbnail(manifest, files[0].split('.')[0])
                 for file in files:
                     """Gets a refid from a file, and then creates a canvas and annotations
@@ -39,16 +43,14 @@ class ManifestMaker:
                     """
                     page_ref = file[:-4]
                     page_number = page_number + 1
-                    width, height, path = self.get_image_info(self.image_dir, file)
+                    width, height, path = self.get_image_info(image_dir, file)
                     cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
                     anno = cvs.annotation(ident=page_ref)
                     self.set_image_data(height, width, page_ref, anno)
                     self.set_thumbnail(cvs, page_ref, height=height, width=width)
-                    os.remove(path)
                 manifest.toFile(compact=False)
-                manifest_file = '{}{}.json'.format(self.manifest_dir, ident)
+                manifest_file = '{}{}.json'.format(manifest_dir, ident)
                 logging.info("Created manifest {}.json".format(ident))
-                self.s3.meta.client.upload_file(manifest_file, self.bucket, 'manifests/{}'.format(ident), ExtraArgs={'ContentType': "application/json"})
 
     def get_identifiers(self, image_dir):
         """Get a list of unique identifiers from files in a directory.
@@ -58,7 +60,7 @@ class ManifestMaker:
         Returns:
             identifiers (lst): a list of unique identifiers.
         """
-        identifiers = [file.split('_')[0] for file in os.listdir(self.image_dir)]
+        identifiers = [file.split('_')[0] for file in os.listdir(image_dir)]
         return list(set(identifiers))
 
     def get_matching_files(self, ident, image_dir):
@@ -70,7 +72,7 @@ class ManifestMaker:
         Returns:
             files (lst): a list of files that matched the identifier.
         """
-        files = [file for file in os.listdir(self.image_dir) if file.startswith(ident)]
+        files = [file for file in os.listdir(image_dir) if file.startswith(ident)]
         return files
 
     def get_dimensions(self, file):
@@ -165,7 +167,7 @@ class ManifestMaker:
             height (int): Pixel height of the image file
             path (str): Concatenated path to the source image file.
         """
-        path = "{}{}".format(self.image_dir, file)
+        path = "{}/{}".format(image_dir, file)
         width, height = self.get_dimensions(path)
         return width, height, path
 

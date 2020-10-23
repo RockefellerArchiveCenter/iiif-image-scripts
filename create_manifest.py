@@ -9,7 +9,7 @@ from pathlib import Path
 from PIL import Image
 
 class ManifestMaker:
-    
+
     def __init__(self):
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
@@ -167,7 +167,7 @@ class ManifestMaker:
             height (int): Pixel height of the image file
             path (str): Concatenated path to the source image file.
         """
-        path = "{}/{}".format(image_dir, file)
+        path = os.path.join(image_dir, file)
         width, height = self.get_dimensions(path)
         return width, height, path
 

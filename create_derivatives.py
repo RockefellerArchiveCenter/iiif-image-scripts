@@ -50,9 +50,9 @@ class DerivativeMaker:
             original_file (str): concatenated string of original directory and file.
             derivative_file (str): concatenated string of end directory and file.
         """
-        original_file = "{}/{}".format(start_directory, file)
+        original_file = os.path.join(start_directory, file)
         fname = file.split(".")[0]
-        derivative_file = "{}/{}.jp2".format(end_directory, fname)
+        derivative_file = "{}.jp2".format(os.path.join(end_directory, fname))
         return original_file, derivative_file
 
     def get_dimensions(self, file):

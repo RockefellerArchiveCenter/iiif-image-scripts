@@ -1,5 +1,6 @@
 import boto3
 import logging
+import magic
 import os
 
 from configparser import ConfigParser
@@ -43,7 +44,6 @@ class UploadFiles:
         Args:
             key (str): A filename without the trailing filetype.
             dir (str): A directory path containing files.
-
         Returns:
             boolean: True if file exists, false otherwise.
         """
@@ -52,7 +52,6 @@ class UploadFiles:
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == "404":
-                logging.error(e)
                 return False
             else:
                 logging.error(e)

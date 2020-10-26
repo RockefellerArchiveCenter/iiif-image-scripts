@@ -11,13 +11,14 @@ from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
 
-    def run(self, source_dir, derivative_dir, skip):
+    def run(self, source_dir, derivative_dir, uuid, skip):
         """Iterates over files in a directory and creates derivative JP2 files for
         each on if it is a valid tiff file.
 
         Args:
             source_dir (str): Path to directory containing source image files (tiffs).
             derivative_dir (str): Path to directory location to save JP2 files.
+            uuid (str): A unique identifier to use for derivative image filenaming.
             skip (bool): Boolean that tells the script whether to skip files
                 ending with `_001`.
         """
@@ -33,7 +34,7 @@ class DerivativeMaker:
                 if file.split('.')[0].endswith('_001'):
                     files.remove(file)
         for file in files:
-                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file)
+                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file, uuid)
                 identifier = re.split('[/.]', derivative_file)[-2]
                 if os.path.isfile(derivative_file):
                     logging.error("{} already exists".format(derivative_file))
@@ -48,19 +49,21 @@ class DerivativeMaker:
                     else:
                         logging.error("{} is not a valid tiff file".format(original_file))
 
-    def make_filenames(self, start_directory, end_directory, file):
+    def make_filenames(self, start_directory, end_directory, file, uuid):
         """Make derivative filenames based on original filenames.
 
         Args:
             start_directory (str): the start directory with the original files.
             end_directory (str): the ending directory for derivative creation.
             file (str): string representation of a filename.
-        Returns
+            uuid (str): unique identifier for the group of objects.
+        Returns:
             original_file (str): concatenated string of original directory and file.
             derivative_file (str): concatenated string of end directory and file.
         """
         original_file = os.path.join(start_directory, file)
-        fname = file.split(".")[0]
+        new_id = file.replace(file.split("_")[0], uuid)
+        fname = new_id.split(".")[0]
         derivative_file = "{}.jp2".format(os.path.join(end_directory, fname))
         return original_file, derivative_file
 
@@ -86,7 +89,7 @@ class DerivativeMaker:
         Args:
             width (int): width of an image
             height (int): height of an image
-        Returns
+        Returns:
             layers (int): number of layers to convert to
         """
         pixdem = max(width, height)
@@ -98,7 +101,7 @@ class DerivativeMaker:
 
         Args:
             file (str): string representation of a filename.
-        Returns
+        Returns:
             boolean: True if tiff file, false otherwise.
         """
         type = mimetypes.MimeTypes().guess_type(file)[0]

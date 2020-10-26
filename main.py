@@ -1,11 +1,12 @@
 import argparse
 import logging
-import magic
 import os
+import shortuuid
 
 from create_derivatives import DerivativeMaker
 from create_manifest import ManifestMaker
 from aws_upload import UploadFiles
+from get_ao import GetObject
 
 
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
@@ -27,6 +28,7 @@ class GenerateFiles:
             skip (bool): Boolean that indicates whether the derivative creation script should skip
                 files ending with `_001`.
         """
+        archival_object = GetObject()
         derivatives = DerivativeMaker()
         manifests = ManifestMaker()
         aws = UploadFiles()
@@ -41,8 +43,14 @@ class GenerateFiles:
                                     manifest_dir])
         directories = [x[0] for x in os.walk(source_dir) if x[0] not in excluded_directories]
         for directory in directories:
-            derivatives.run(directory, derivative_dir, skip)
-            manifests.run(derivative_dir, manifest_dir)
+            identifier = directory.split('/')[-1]
+            ao, title, date = archival_object.run(identifier)
+            uuid = shortuuid.uuid()
+            if ao:
+                derivatives.run(directory, derivative_dir, uuid, skip)
+                manifests.run(derivative_dir, manifest_dir, uuid, title, date)
+            else:
+                logging.error("Could not find archival object with refid of {}".format(identifier))
         aws.upload_s3(derivative_dir, manifest_dir)
 
 GenerateFiles().run(args.source_directory, args.skip)

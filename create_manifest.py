@@ -1,8 +1,6 @@
 import logging
 import os
 
-from asnake import utils
-from asnake.aspace import ASpace
 from configparser import ConfigParser
 from iiif_prezi.factory import ManifestFactory
 from pathlib import Path
@@ -13,20 +11,18 @@ class ManifestMaker:
     def __init__(self):
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
-        self.client = ASpace(baseurl=self.config.get("ArchivesSpace", "baseurl"),
-                        username=self.config.get("ArchivesSpace", "username"),
-                        password=self.config.get("ArchivesSpace", "password"),
-                        repository=self.config.get("ArchivesSpace", "repository")).client
-
         self.fac = ManifestFactory()
 
-    def run(self, image_dir, manifest_dir):
+    def run(self, image_dir, manifest_dir, uuid, title, date):
         """Method that runs the other methods to build a manifest file and populate
         it with information.
 
         Args:
             image_dir (str): Path to directory containing derivative image files.
             manifest_dir (str): Path to directory to save manifest files.
+            uuid (str): A unique identifier.
+            title (str): String title of the archival object the manifest refers to.
+            date (str): String date of the archival object the manifest refers to.
         """
         imageurl=self.config.get("ImageServer", "imageurl")
 
@@ -35,40 +31,38 @@ class ManifestMaker:
         self.fac.set_base_prezi_uri("{}/manifests/".format(imageurl))
         self.fac.set_base_image_uri("{}/iiif/2/images/".format(imageurl))
 
-        identifiers = self.get_identifiers(image_dir)
-        for ident in identifiers:
-            page_number = 0
-            ao = self.get_ao(ident)
-            if ao:
-                manifest = self.set_manifest_data(ident, ao)
-                seq = manifest.sequence(ident="{}.json".format(ident))
-                files = sorted(self.get_matching_files(ident, image_dir))
-                self.set_thumbnail(manifest, files[0].split('.')[0])
-                for file in files:
-                    """Gets a refid from a file, and then creates a canvas and annotations
-                    based on image dimensions and base prezi directories.
-                    """
-                    page_ref = file[:-4]
-                    page_number = page_number + 1
-                    width, height, path = self.get_image_info(image_dir, file)
-                    cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
-                    anno = cvs.annotation(ident=page_ref)
-                    self.set_image_data(height, width, page_ref, anno)
-                    self.set_thumbnail(cvs, page_ref, height=height, width=width)
-                manifest.toFile(compact=False)
-                manifest_file = '{}{}.json'.format(manifest_dir, ident)
-                logging.info("Created manifest {}.json".format(ident))
+        page_number = 0
+        manifest = self.set_manifest_data(uuid, title, date)
+        seq = manifest.sequence(ident="{}.json".format(uuid))
+        files = sorted(self.get_matching_files(uuid, image_dir))
+        self.set_thumbnail(manifest, files[0].split('.')[0])
+        for file in files:
+            page_number = page_number + 1
+            width, height, path = self.get_image_info(image_dir, file)
+            page_ref = file[:-4]
+            cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
+            anno = cvs.annotation(ident=page_ref)
+            self.set_image_data(height, width, page_ref, anno)
+            self.set_thumbnail(cvs, page_ref, height=height, width=width)
+        manifest.toFile(compact=False)
+        manifest_file = '{}{}.json'.format(manifest_dir, uuid)
+        logging.info("Created manifest {}.json".format(uuid))
 
-    def get_identifiers(self, image_dir):
-        """Get a list of unique identifiers from files in a directory.
+
+    def set_manifest_data(self, identifier, title, date):
+        """Sets the manifest title, date, and instantiates the manifest.
 
         Args:
-            image_dir (str): a string representation of the directory containing image files.
+            identifier (str): a unique identifier to use for the manifest identifier.
+            title (str): string representation of the object's title.
+            date (str): string representation of the object's date.
         Returns:
-            identifiers (lst): a list of unique identifiers.
+            manifest (dict): a JSON IIIF manifest
         """
-        identifiers = [file.split('_')[0] for file in os.listdir(image_dir)]
-        return list(set(identifiers))
+        manifest_label = title.title()
+        manifest = self.fac.manifest(ident=identifier, label=manifest_label)
+        manifest.set_metadata({"Date": date})
+        return manifest
 
     def get_matching_files(self, ident, image_dir):
         """Get a list of files that start with a specific refid.
@@ -95,55 +89,6 @@ class ManifestMaker:
             image_width, image_height = img.size
             return image_width, image_height
 
-    def get_ao(self, refid):
-        """Gets a JSON representation of an archival object.
-
-        Args:
-            refid (str): an ArchivesSpace refid
-        Returns:
-            ao (dict): a JSON representation of an archival object
-        """
-        refs = self.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
-        if not refs.get("archival_objects"):
-            logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
-            return False
-        else:
-            ao_id = refs.get("archival_objects")[0].get("ref")
-            ao = self.client.get(ao_id).json()
-            return ao
-
-    def get_title_date(self, archival_object):
-        """Gets the closest title and date to an archival object by looking through its
-        ancestors.
-
-        Args:
-            archival_object (dict): a JSON representation of an archival object
-        Returns:
-            title (str): A string representation of of a title.
-            date (str): A string representation of a date expression.
-        """
-        ao_title = utils.find_closest_value(archival_object, 'title', self.client)
-        ao_date = utils.find_closest_value(archival_object, 'dates', self.client)
-        expressions = [date.get('expression') for date in ao_date]
-        ao_date = ', '.join([str(expression) for expression in expressions])
-        return ao_title, ao_date
-
-    def set_manifest_data(self, identifier, archival_object):
-        """Sets the manifest title, date, and instantiates the manifest.
-
-        Args:
-            identifier (str): an ArchivesSpace refid to use for the manifest identifier.
-            archival_object (dict): A JSON representation of an archival object.
-
-        Returns:
-            manifest (dict): a JSON IIIF manifest
-        """
-        title, date = self.get_title_date(archival_object)
-        manifest_label = title.title()
-        manifest = self.fac.manifest(ident=identifier, label=manifest_label)
-        manifest.set_metadata({"Date": date})
-        return manifest
-
     def set_canvas_data(self, sequence, ref, page_number, width, height):
         """Sets canvas information.
 
@@ -153,7 +98,6 @@ class ManifestMaker:
             page_number (int): Page number for the canvas.
             width (int): Pixel width of the canvas.
             height (int): Pixel height of the canvas
-
         Returns:
             cvs (object): A iiif_prezi factory canvas object.
         """
@@ -168,7 +112,6 @@ class ManifestMaker:
         Args:
             image_dir (str): path to the directory containing the image file
             file (str): filename of the image file
-
         Returns:
             width (int): Pixel width of the image file
             height (int): Pixel height of the image file
@@ -180,7 +123,6 @@ class ManifestMaker:
 
     def set_image_data(self, height, width, page_ref, annotation):
         """Sets the image height and width. Creates the image object.
-
         Args:
             height (int): Pixel height of the image
             width (int): Pixel width of the image
@@ -204,7 +146,6 @@ class ManifestMaker:
             identifier (str): A string identifier to use as the thumbnail id.
             height (int): Height in pixels of the original image.
             width (int): Width in pixels of the original image.
-
         Returns:
             section (object): An updated iiif_prezi object with thumbnail section.
         """

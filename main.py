@@ -45,8 +45,8 @@ class GenerateFiles:
         for directory in directories:
             identifier = directory.split('/')[-1]
             ao, title, date = archival_object.run(identifier)
-            uuid = shortuuid.uuid()
             if ao:
+                uuid = shortuuid.uuid(name=ao["uri"]))
                 derivatives.run(directory, derivative_dir, uuid, skip)
                 manifests.run(derivative_dir, manifest_dir, uuid, title, date)
             else:

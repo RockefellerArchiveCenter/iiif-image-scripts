@@ -19,17 +19,18 @@ class GetObject:
         Args:
             ident (str): an ArchivesSpace refid.
         Returns:
-            ao (bool): True if the script can find an archival object with the matching
-                refid.
+            ao (dict): A dictionary representation of an archival object from ArchivesSpace.
+                Empty if no matching object is found.
             title (str): string representation of the closest title to the archival object.
             date (str): string representation of the closest date to the archival object.
         """
-        ao = self.get_ao(ident)
         title, date = '', ''
+        ao = self.get_ao(ident)
         if ao:
             title, date = self.get_title_date(ao)
             return ao, title, date
         else:
+            ao = {}
             return ao, title, date
 
     def get_ao(self, refid):
@@ -43,7 +44,6 @@ class GetObject:
         refs = self.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
         if not refs.get("archival_objects"):
             logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
-            return False
         else:
             ao_id = refs.get("archival_objects")[0].get("ref")
             ao = self.client.get(ao_id).json()

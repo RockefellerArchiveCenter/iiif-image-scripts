@@ -64,7 +64,7 @@ class DerivativeMaker:
         original_file = os.path.join(start_directory, file)
         new_id = file.replace(file.split("_")[0], uuid)
         fname = new_id.split(".")[0]
-        derivative_file = "{}.jp2".format(os.path.join(end_directory, fname))
+        derivative_file = os.path.join(end_directory, "{}.jp2".format(fname))
         return original_file, derivative_file
 
     def get_dimensions(self, file):

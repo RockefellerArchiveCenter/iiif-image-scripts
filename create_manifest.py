@@ -21,6 +21,13 @@ class ManifestMaker:
         self.fac = ManifestFactory()
 
     def run(self, image_dir, manifest_dir):
+        """Method that runs the other methods to build a manifest file and populate
+        it with information.
+
+        Args:
+            image_dir (str): Path to directory containing derivative image files.
+            manifest_dir (str): Path to directory to save manifest files.
+        """
         imageurl=self.config.get("ImageServer", "imageurl")
 
         self.fac.set_debug("error")

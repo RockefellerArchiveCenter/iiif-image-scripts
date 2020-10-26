@@ -12,6 +12,15 @@ from PIL.TiffTags import TAGS
 class DerivativeMaker:
 
     def run(self, source_dir, derivative_dir, skip):
+        """Iterates over files in a directory and creates derivative JP2 files for
+        each on if it is a valid tiff file.
+
+        Args:
+            source_dir (str): Path to directory containing source image files (tiffs).
+            derivative_dir (str): Path to directory location to save JP2 files.
+            skip (bool): Boolean that tells the script whether to skip files
+                ending with `_001`.
+        """
         default_options = ["-r 1.5",
                            "-c [256,256],[256,256],[128,128]",
                            "-b 64,64",

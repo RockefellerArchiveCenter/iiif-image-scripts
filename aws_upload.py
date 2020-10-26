@@ -16,6 +16,12 @@ class UploadFiles:
         self.bucket = self.config.get("S3", "bucketname")
 
     def upload_s3(self, derivative_dir, manifest_dir):
+        """Iterates over directories and conditionally uploads files to S3.
+
+        Args:
+            derivative_dir (str): Directory path to derivative image files.
+            manifest_dir (str): Directory path to manifest files.
+        """
         for dir in [derivative_dir, manifest_dir]:
             for file in os.listdir(dir):
                 if not file.startswith('.'):
@@ -32,11 +38,22 @@ class UploadFiles:
                                                         ExtraArgs={'ContentType': type})
 
     def s3_check(self, key, dir):
+        """Checks if a file already exists in an S3 bucket.
+
+        Args:
+            key (str): A filename without the trailing filetype.
+            dir (str): A directory path containing files.
+
+        Returns:
+            boolean: True if file exists, false otherwise.
+        """
         try:
             self.s3.Object(self.bucket, os.path.join(dir.split("/")[-1], key)).load()
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == "404":
+                logging.error(e)
                 return False
             else:
-                print(e)
+                logging.error(e)
+                return False

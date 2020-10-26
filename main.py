@@ -20,6 +20,13 @@ class GenerateFiles:
                             level=logging.INFO)
 
     def run(self, source_directory, skip):
+        """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
+
+        Args:
+            source_directory (str): Directory path to original source files.
+            skip (bool): Boolean that indicates whether the derivative creation script should skip
+                files ending with `_001`.
+        """
         derivatives = DerivativeMaker()
         manifests = ManifestMaker()
         aws = UploadFiles()

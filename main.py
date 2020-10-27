@@ -3,10 +3,11 @@ import logging
 import os
 import shortuuid
 
+from aws_upload import UploadFiles
 from create_derivatives import DerivativeMaker
 from create_manifest import ManifestMaker
-from aws_upload import UploadFiles
 from get_ao import GetObject
+from make_pdf import PDFMaker
 
 
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
@@ -30,6 +31,7 @@ class GenerateFiles:
         """
         archival_object = GetObject()
         derivatives = DerivativeMaker()
+        pdf = PDFMaker()
         manifests = ManifestMaker()
         aws = UploadFiles()
         source_dir = source_directory if source_directory.endswith('/') else source_directory + '/'
@@ -51,6 +53,7 @@ class GenerateFiles:
                 manifests.run(derivative_dir, manifest_dir, uuid, title, date)
             else:
                 logging.error("Could not find archival object with refid of {}".format(identifier))
+        pdf.run(derivative_dir)
         aws.upload_s3(derivative_dir, manifest_dir)
 
 GenerateFiles().run(args.source_directory, args.skip)

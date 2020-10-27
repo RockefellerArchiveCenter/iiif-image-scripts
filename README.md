@@ -119,3 +119,13 @@ This script requires a `local_settings.cfg` file with the following sections and
   - [`repository`] (ArchivesSpace repository ID)
   - [`username`] (ArchivesSpace username)
   - [`password`] (ArchivesSpace password)
+
+## `make_pdf.py`
+
+Merges files with matching identifiers into a single pdf.
+
+### Requires
+
+This script requires the following libraries to function correctly.
+
+- img2pdf

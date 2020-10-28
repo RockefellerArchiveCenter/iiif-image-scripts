@@ -7,8 +7,11 @@ class PDFMaker:
         identifiers = self.get_identifiers(derivative_dir)
         for ident in identifiers:
             files = sorted(self.get_matching_files(ident, derivative_dir))
-            with open("{}.pdf".format(ident),"wb") as f:
-            	f.write(img2pdf.convert(files))
+            with open("{}.pdf".format(os.path.join(derivative_dir, ident)),"wb") as f:
+                for file in files:
+                    print(file)
+                    file = file.encode()
+                    f.write(img2pdf.convert(file))
 
     def get_identifiers(self, image_dir):
         """Get a list of unique identifiers from files in a directory.

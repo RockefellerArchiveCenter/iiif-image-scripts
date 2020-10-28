@@ -12,6 +12,8 @@ class ManifestMaker:
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
         self.fac = ManifestFactory()
+        self.server_url = self.config.get("ImageServer", "imageurl")
+        self.resource_url = "{}/iiif/2/".format(self.server_url)
 
     def run(self, image_dir, manifest_dir, uuid, title, date):
         """Method that runs the other methods to build a manifest file and populate
@@ -24,12 +26,11 @@ class ManifestMaker:
             title (str): String title of the archival object the manifest refers to.
             date (str): String date of the archival object the manifest refers to.
         """
-        imageurl=self.config.get("ImageServer", "imageurl")
 
         self.fac.set_debug("error")
         self.fac.set_base_prezi_dir(manifest_dir)
-        self.fac.set_base_prezi_uri("{}/manifests/".format(imageurl))
-        self.fac.set_base_image_uri("{}/iiif/2/images/".format(imageurl))
+        self.fac.set_base_prezi_uri("{}/manifests/".format(self.server_url))
+        self.fac.set_base_image_uri("{}/".format(self.resource_url))
 
         page_number = 0
         manifest = self.set_manifest_data(uuid, title, date)
@@ -132,10 +133,11 @@ class ManifestMaker:
         Returns:
             img (object): A iiif_prezi image object with data.
         """
-        img = annotation.image("/{}/full/max/0/default.jpg".format(page_ref))
+        img = annotation.image("{}/full/max/0/default.jpg".format(page_ref))
         img.height = height
         img.width = width
         img.format = "image/jpeg"
+        img.service = self.set_service(page_ref)
         return img
 
     def set_thumbnail(self, section, identifier, height=None, width=None):
@@ -149,11 +151,18 @@ class ManifestMaker:
         Returns:
             section (object): An updated iiif_prezi object with thumbnail section.
         """
-        section.thumbnail = self.fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))
+        section.thumbnail = self.fac.image(ident="{}/square/200,/0/default.jpg".format(identifier))
         section.thumbnail.format = "image/jpeg"
         section.thumbnail.height = 200
         if not (height or width):
             section.thumbnail.width = 200
         else:
             section.thumbnail.width = int(width / (height / section.thumbnail.height))
+        section.thumbnail.service = self.set_service(identifier)
         return section
+
+    def set_service(self, identifier):
+        service = self.fac.service(ident="{}{}".format(self.resource_url, identifier),
+                                   context="http://iiif.io/api/image/2/context.json",
+                                   profile="http://iiif.io/api/image/2/level2.json")
+        return service

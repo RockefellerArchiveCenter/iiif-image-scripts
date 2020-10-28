@@ -30,10 +30,10 @@ class GenerateFiles:
                 files ending with `_001`.
         """
         archival_object = GetObject()
-        #derivatives = DerivativeMaker()
+        derivatives = DerivativeMaker()
         pdf = PDFMaker()
-        #manifests = ManifestMaker()
-        #aws = UploadFiles()
+        manifests = ManifestMaker()
+        aws = UploadFiles()
         source_dir = source_directory if source_directory.endswith('/') else source_directory + '/'
         derivative_dir = os.path.join(source_dir, "images")
         manifest_dir = os.path.join(source_dir, "manifests")
@@ -49,11 +49,11 @@ class GenerateFiles:
             ao, title, date = archival_object.run(identifier)
             if ao:
                 uuid = shortuuid.uuid(name=ao["uri"])
-                #derivatives.run(directory, derivative_dir, uuid, skip)
-                #manifests.run(derivative_dir, manifest_dir, uuid, title, date)
+                derivatives.run(directory, derivative_dir, uuid, skip)
+                manifests.run(derivative_dir, manifest_dir, uuid, title, date)
             else:
                 logging.error("Could not find archival object with refid of {}".format(identifier))
         pdf.run(derivative_dir)
-        #aws.upload_s3(derivative_dir, manifest_dir)
+        aws.upload_s3(derivative_dir, manifest_dir)
 
 GenerateFiles().run(args.source_directory, args.skip)

@@ -7,8 +7,18 @@ Main wrapper script for running the four scripts together. Point it at a directo
 
 ### Requires
 
+The entire suite requires these libraries to work correctly.
+
 - Python3
+- ArchivesSnake
+- Boto3
+- IIIF-Prezi
+- img2pdf
+- Pillow
+- Python Magic
 - Shortuuid
+
+It also requires OpenJPEG to be installed fully.
 
 ### Usage
 
@@ -81,8 +91,6 @@ Uses the `IIIF-Prezi` manifest factory to make Presentation API 2.1-compliant ma
 
 This script requires the following libraries to function correctly.
 
-  - Python3
-  - Boto3
   - IIIF-Prezi
   - Pillow
 

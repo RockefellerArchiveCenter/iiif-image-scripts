@@ -26,7 +26,7 @@ This script will make a log file named `iiif_generation.log` containing informat
 
 ## `aws_upload.py`
 
-Uploads files to an AWS bucket.
+Uploads files to an AWS bucket. Currently uploads image files to an `/images/` folder and manifest files `/manifests/`.
 
 ### Requires
 

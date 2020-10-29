@@ -1,5 +1,3 @@
-import argparse
-import boto3
 import logging
 import math
 import mimetypes
@@ -7,38 +5,36 @@ import os
 import re
 import subprocess
 
-from configparser import ConfigParser
 from pathlib import Path
 from PIL import Image
 from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
-    def __init__(self, source_dir, derivative_dir, skip):
-        config = ConfigParser()
-        config.read("local_settings.cfg")
-        self.s3 = boto3.resource(service_name='s3',
-                                 region_name='us-east-1',
-                                 aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                                 aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
-        logfile = 'derivative_log.log'
-        logging.basicConfig(filename=logfile,
-                            level=logging.INFO)
-        self.bucket = config.get("S3", "bucketname")
-        self.default_options = [
-                           "-r 1.5",
+
+    def run(self, source_dir, derivative_dir, uuid, skip):
+        """Iterates over files in a directory and creates derivative JP2 files for
+        each on if it is a valid tiff file.
+
+        Args:
+            source_dir (str): Path to directory containing source image files (tiffs).
+            derivative_dir (str): Path to directory location to save JP2 files.
+            uuid (str): A unique identifier to use for derivative image filenaming.
+            skip (bool): Boolean that tells the script whether to skip files
+                ending with `_001`.
+        """
+        default_options = ["-r 1.5",
                            "-c [256,256],[256,256],[128,128]",
                            "-b 64,64",
                            "-p RPCL"
                            ]
 
-    def run(self):
         files = [file for file in os.listdir(source_dir)]
         if skip is not None:
             for file in files:
                 if file.split('.')[0].endswith('_001'):
                     files.remove(file)
         for file in files:
-                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file)
+                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file, uuid)
                 identifier = re.split('[/.]', derivative_file)[-2]
                 if os.path.isfile(derivative_file):
                     logging.error("{} already exists".format(derivative_file))
@@ -47,27 +43,28 @@ class DerivativeMaker:
                         width, height = self.get_dimensions(original_file)
                         resolutions = self.calculate_layers(width, height)
                         cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                            original_file, derivative_file, resolutions, ' '.join(self.default_options))
+                            original_file, derivative_file, resolutions, ' '.join(default_options))
                         result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                         logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                        s3.meta.client.upload_file(derivative_file, self.bucket, identifier)
                     else:
                         logging.error("{} is not a valid tiff file".format(original_file))
 
-    def make_filenames(self, start_directory, end_directory, file):
+    def make_filenames(self, start_directory, end_directory, file, uuid):
         """Make derivative filenames based on original filenames.
 
         Args:
             start_directory (str): the start directory with the original files.
             end_directory (str): the ending directory for derivative creation.
             file (str): string representation of a filename.
-        Returns
+            uuid (str): unique identifier for the group of objects.
+        Returns:
             original_file (str): concatenated string of original directory and file.
             derivative_file (str): concatenated string of end directory and file.
         """
-        original_file = "{}{}".format(start_directory, file)
-        fname = file.split(".")[0]
-        derivative_file = "{}{}.jp2".format(end_directory, fname)
+        original_file = os.path.join(start_directory, file)
+        new_id = file.replace(file.split("_")[0], uuid)
+        fname = new_id.split(".")[0]
+        derivative_file = os.path.join(end_directory, "{}.jp2".format(fname))
         return original_file, derivative_file
 
     def get_dimensions(self, file):
@@ -92,7 +89,7 @@ class DerivativeMaker:
         Args:
             width (int): width of an image
             height (int): height of an image
-        Returns
+        Returns:
             layers (int): number of layers to convert to
         """
         pixdem = max(width, height)
@@ -104,7 +101,7 @@ class DerivativeMaker:
 
         Args:
             file (str): string representation of a filename.
-        Returns
+        Returns:
             boolean: True if tiff file, false otherwise.
         """
         type = mimetypes.MimeTypes().guess_type(file)[0]
@@ -112,15 +109,3 @@ class DerivativeMaker:
             return True
         else:
             return False
-
-parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
-parser.add_argument("input_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
-parser.add_argument("output_directory", help="The full directory path to store derivative files in (ex. /Documents/derivatives/)")
-parser.add_argument("--skip", help="Skips the first file for each identifier.")
-args = parser.parse_args()
-
-source_dir = args.input_directory if args.input_directory.endswith('/') else args.input_directory + '/'
-derivative_dir = args.output_directory if args.output_directory.endswith('/') else args.output_directory + '/'
-skip = args.skip
-
-DerivativeMaker(source_dir, derivative_dir, skip).run()

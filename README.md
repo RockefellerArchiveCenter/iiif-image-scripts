@@ -12,11 +12,11 @@ Main wrapper script for running the four scripts together. Point it at a directo
 
 ### Usage
 
-`python3 main.py /path/to/tif/files/ /path/to/tiff/files/`
+`python3 main.py /path/to/tif/files/`
 
 or
 
-`python3 main.py /path/to/tif/files/ /path/to/tiff/files/ --skip True` to skip image files ending in `_001`.
+`python3 main.py /path/to/tif/files/ --skip True` to skip image files ending in `_001`.
 
 Local usage skips these files sometimes because they are scanning targets, and not part of the object.
 

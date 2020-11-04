@@ -1,12 +1,13 @@
+import json
 from unittest.mock import patch
 
-from helpers import random_string
+from helpers import archivesspace_vcr, random_string
 from iiif_pipeline.get_ao import GetObject
 
-@patch("requests.post")
-@patch("requests.get")
-def test_run(mock_post, mock_get):
-    mock_post.return_value.status_code = 200
-    mock_get.return_value.json = {}
-    object = GetObject().run(random_string())
-    assert object == ({}, "", "")
+def test_run():
+    found_refid = "aspace_b1f076a9f49d369034188c232f7cdf25"
+    missing_refid = "aspace_b1f076a9f49d369034188c232f7cdf26"
+    with archivesspace_vcr.use_cassette("get_ao.json"):
+        for refid in [found_refid, missing_refid]:
+            object = GetObject().run(refid)
+            assert isinstance(object, tuple)    

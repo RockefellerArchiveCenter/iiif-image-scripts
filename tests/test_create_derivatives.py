@@ -2,7 +2,7 @@ import os
 import random
 import shutil
 
-from helpers import random_string
+from helpers import copy_sample_files, random_string
 from iiif_pipeline.create_derivatives import DerivativeMaker
 
 
@@ -13,20 +13,12 @@ UUIDS = [random_string() for x in range(random.randint(1,3))]
 PAGE_COUNT = random.randint(1,5)
 
 def setup():
-    """Sets up source directory for tests.
-
-    Duplicates the sample file into randomly-sized groups for randomly-generated
-    UUIDs.
-    """
+    """Sets up source directory for tests."""
     for d in [SOURCE_DIR, DERIVATIVE_DIR]:
         if os.path.isdir(d):
             shutil.rmtree(d)
     shutil.copytree(FIXTURES_FILEPATH, SOURCE_DIR)
-    for f in os.listdir(SOURCE_DIR):
-        for uuid in UUIDS:
-            for page in range(PAGE_COUNT):
-                shutil.copyfile(os.path.join(SOURCE_DIR, f), os.path.join(SOURCE_DIR, "{}_{}.tif".format(uuid, page)))
-        os.remove(os.path.join(SOURCE_DIR, f))
+    copy_sample_files(SOURCE_DIR, UUIDS, PAGE_COUNT, "tif")
     os.makedirs(DERIVATIVE_DIR)
 
 def test_run():

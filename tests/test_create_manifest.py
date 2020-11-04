@@ -2,7 +2,7 @@ import os
 import random
 import shutil
 
-from helpers import random_string
+from helpers import copy_sample_files, random_string
 from iiif_pipeline.create_manifest import ManifestMaker
 
 
@@ -18,13 +18,7 @@ def setup():
         if os.path.isdir(d):
             shutil.rmtree(d)
     shutil.copytree(FIXTURE_FILEPATH, DERIVATIVE_DIR)
-    for f in os.listdir(DERIVATIVE_DIR):
-        for uuid in UUIDS:
-            for page in range(PAGE_COUNT):
-                shutil.copyfile(
-                    os.path.join(DERIVATIVE_DIR, f),
-                    os.path.join(DERIVATIVE_DIR, "{}_{}.jp2".format(uuid, page)))
-        os.remove(os.path.join(DERIVATIVE_DIR, f))
+    copy_sample_files(DERIVATIVE_DIR, UUIDS, PAGE_COUNT, "jp2")
     os.makedirs(MANIFEST_DIR)
 
 def test_run():

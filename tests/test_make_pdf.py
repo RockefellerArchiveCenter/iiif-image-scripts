@@ -2,7 +2,7 @@ import os
 import random
 import shutil
 
-from helpers import random_string
+from helpers import copy_sample_files, random_string
 from iiif_pipeline.make_pdf import PDFMaker
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
@@ -15,13 +15,7 @@ def setup():
     if os.path.isdir(DERIVATIVE_DIR):
         shutil.rmtree(DERIVATIVE_DIR)
     shutil.copytree(FIXTURE_FILEPATH, DERIVATIVE_DIR)
-    for f in os.listdir(DERIVATIVE_DIR):
-        for uuid in UUIDS:
-            for page in range(PAGE_COUNT):
-                shutil.copyfile(
-                    os.path.join(DERIVATIVE_DIR, f),
-                    os.path.join(DERIVATIVE_DIR, "{}_{}.jp2".format(uuid, page)))
-        os.remove(os.path.join(DERIVATIVE_DIR, f))
+    copy_sample_files(DERIVATIVE_DIR, UUIDS, PAGE_COUNT, "jp2")
 
 def test_run():
     """Ensure the run method produces the expected number of files."""

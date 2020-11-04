@@ -1,0 +1,11 @@
+[ArchivesSpace]
+baseurl = http://localhost:8089
+repository = 2
+username = admin
+password = admin
+
+[ImageServer]
+imageurl = http://images.rockarch.org
+
+[S3]
+bucketname = rac-iiif

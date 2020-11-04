@@ -5,7 +5,6 @@ import os
 import re
 import subprocess
 
-from pathlib import Path
 from PIL import Image
 from PIL.TiffTags import TAGS
 

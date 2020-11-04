@@ -11,9 +11,9 @@ class UploadFiles:
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
         self.s3 = boto3.resource(service_name='s3',
-                            region_name='us-east-1',
-                            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-                            aws_secret_access_key= os.getenv('AWS_SECRET_ACCESS_KEY'))
+                            region_name=self.config.get("S3", "region_name"),
+                            aws_access_key_id=self.config.get("S3", "aws_access_key_id"),
+                            aws_secret_access_key=self.config.get("S3", "aws_secret_access_key"))
         self.bucket = self.config.get("S3", "bucketname")
 
     def upload_s3(self, derivative_dir, manifest_dir):

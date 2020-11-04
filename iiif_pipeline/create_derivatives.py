@@ -40,8 +40,7 @@ class DerivativeMaker:
                     logging.error("{} already exists".format(derivative_file))
                 else:
                     if self.is_tiff(original_file):
-                        width, height = self.get_dimensions(original_file)
-                        resolutions = self.calculate_layers(width, height)
+                        resolutions = self.calculate_layers(original_file)
                         cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
                             original_file, derivative_file, resolutions, ' '.join(default_options))
                         result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
@@ -67,33 +66,21 @@ class DerivativeMaker:
         derivative_file = os.path.join(end_directory, "{}.jp2".format(fname))
         return original_file, derivative_file
 
-    def get_dimensions(self, file):
-        """Gets pixel dimensions of a file.
-
-        Args:
-            file (str): filename of an image file.
-        Returns:
-            image_width (int): pixel width of an image
-            image_height (int): pixel height of an image
-        """
-        with Image.open(file) as img:
-            for x in img.tag[256]:
-                image_width = x
-            for y in img.tag[257]:
-                image_height = y
-            return image_width, image_height
-
-    def calculate_layers(self, width, height):
+    def calculate_layers(self, file):
         """Calculates the number of layers based on pixel dimensions.
 
+        For TIFF files, image tag 256 is the width, and 257 is the height.
+
         Args:
-            width (int): width of an image
-            height (int): height of an image
+            file (str): filename of a TIFF image file.
         Returns:
             layers (int): number of layers to convert to
         """
-        pixdem = max(width, height)
-        layers = math.ceil((math.log(pixdem) / math.log(2)) - ((math.log(96) / math.log(2)))) + 1
+        with Image.open(file) as img:
+            width = [w for w in img.tag[256]][0]
+            height = [h for h in img.tag[257]][0]
+        pixel_dimension = max(width, height)
+        layers = math.ceil((math.log(pixel_dimension) / math.log(2)) - ((math.log(96) / math.log(2)))) + 1
         return layers
 
     def is_tiff(self, file):

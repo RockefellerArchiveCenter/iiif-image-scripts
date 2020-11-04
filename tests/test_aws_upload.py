@@ -3,7 +3,7 @@ import shutil
 import random
 
 import botocore.session
-from botocore.stub import Stubber, ANY
+from botocore.stub import Stubber
 
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.aws_upload import UploadFiles
@@ -34,3 +34,7 @@ def test_s3_check():
         stubber.add_response("head_object", head_response, expected_params)
         found = UploadFiles().s3_check(DERIVATIVE_DIR, MANIFEST_DIR)
         assert found == False
+
+# TODO: tests for run method.
+# The trick here is that the botocore Stubber does not include methods for
+# upload_file, so we'll need to find some other way of mocking that.

@@ -9,7 +9,8 @@ RUN apt-get update -y && apt-get install -y wget \
   cmake \
   make \
   pkg-config \
-  libtiff-dev
+  libtiff-dev \
+  libmagic-dev
 
 # Download and compile openjpeg2.1
 WORKDIR /tmp/openjpeg

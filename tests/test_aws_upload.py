@@ -3,7 +3,7 @@ import shutil
 import random
 
 import botocore.session
-from botocore.stub import Stubber
+from botocore.stub import Stubber, ANY
 
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.aws_upload import UploadFiles

@@ -3,7 +3,7 @@ Repository for the RAC's iiif imaging scripts (derivative and manifest creation)
 
 ## Quick start
 
-The Dockerfile included in this repository will allow you to run these scripts without install dependencies locally.
+The Dockerfile included in this repository will allow you to run these scripts without installing dependencies locally.
 
 First, build the image:
 

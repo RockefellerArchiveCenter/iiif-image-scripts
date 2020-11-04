@@ -1,0 +1,9 @@
+language: python
+services:
+- docker
+install:
+  - docker build . -t iiif-pipeline
+script:
+- docker run -it iiif-pipeline python -m pytest
+notifications:
+  email: false

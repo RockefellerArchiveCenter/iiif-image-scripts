@@ -3,7 +3,7 @@ import random
 import shutil
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.create_derivatives import DerivativeMaker
+from iiif_pipeline.derivatives import DerivativeMaker
 
 
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")

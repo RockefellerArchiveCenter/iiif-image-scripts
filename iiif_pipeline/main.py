@@ -4,10 +4,9 @@ import os
 import shortuuid
 
 from aws_upload import AWSClient
-from create_derivatives import DerivativeMaker
+from derivatives import DerivativeMaker
 from create_manifest import ManifestMaker
 from get_ao import ArchivesSpaceClient
-from make_pdf import PDFMaker
 
 
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
@@ -32,13 +31,15 @@ class IIIFPipeline:
         """
         as_client = ArchivesSpaceClient() # TODO: the config values for these should be passed in here
         aws_client = AWSClient() # TODO: the config values for these should be passed in here
-        derivative_dir = os.path.join(source_dir, "images")
+        jp2_dir = os.path.join(source_dir, "images")
+        pdf_dir = os.path.join(source_dir, "pdfs")
         manifest_dir = os.path.join(source_dir, "manifests")
-        for path in [derivative_dir, manifest_dir]:
+        for path in [jp2_dir, pdf_dir, manifest_dir]:
             if not os.path.exists(path):
                 os.makedirs(path)
         excluded_directories = set([source_dir,
-                                    derivative_dir,
+                                    jp2_dir,
+                                    pdf_dir,
                                     manifest_dir])
         directories = [x[0] for x in os.walk(source_dir) if x[0] not in excluded_directories]
         for directory in directories:
@@ -46,12 +47,12 @@ class IIIFPipeline:
             try:
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
-                DerivativeMaker().create_jp2(directory, derivative_dir, identifier, skip)
+                DerivativeMaker().create_jp2(directory, jp2_dir, identifier, skip)
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl")).create_manifest(
-                        derivative_dir, manifest_dir, identifier, obj_data)
-                PDFMaker().make_pdf(derivative_dir)  # TODO: consider moving this to be a method of DerivativeMaker
-                aws_client.upload_files(derivative_dir, manifest_dir)
+                        jp2_dir, manifest_dir, identifier, obj_data)
+                DerivativeMaker().make_pdf(pdf_dir)
+                aws_client.upload_files(jp2_dir, manifest_dir)
             except Exception as e:
                 # TODO: add cleanup function
                 logging.error(e)

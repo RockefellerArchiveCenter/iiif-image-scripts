@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 
-from pathlib import Path
+import img2pdf
 from PIL import Image
 from PIL.TiffTags import TAGS
 
@@ -48,6 +48,14 @@ class DerivativeMaker:
                         logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
                     else:
                         logging.error("{} is not a valid tiff file".format(original_file))
+
+    def create_pdf(self, derivative_dir):
+        identifiers = list(set([file.split('_')[0] for file in os.listdir(derivative_dir) if not file.startswith('.')]))
+        for ident in identifiers:
+            files = [os.path.join(derivative_dir, file) for file in sorted(os.listdir(derivative_dir)) if file.startswith(ident)]
+            pdf_name = os.path.join(derivative_dir, ident)
+            with open("{}.pdf".format(pdf_name),"wb") as f:
+                f.write(img2pdf.convert(files))
 
     def make_filenames(self, start_directory, end_directory, file, uuid):
         """Make derivative filenames based on original filenames.

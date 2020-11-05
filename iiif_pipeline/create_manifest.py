@@ -3,7 +3,6 @@ import os
 
 from configparser import ConfigParser
 from iiif_prezi.factory import ManifestFactory
-from pathlib import Path
 from PIL import Image
 
 class ManifestMaker:

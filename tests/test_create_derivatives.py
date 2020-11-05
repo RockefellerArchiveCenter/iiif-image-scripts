@@ -21,9 +21,9 @@ def setup():
     copy_sample_files(SOURCE_DIR, UUIDS, PAGE_COUNT, "tif")
     os.makedirs(DERIVATIVE_DIR)
 
-def test_run():
+def test_create_jp2():
     """Ensure the run method produces the expected number of files."""
-    DerivativeMaker().run(SOURCE_DIR, DERIVATIVE_DIR, random.choice(UUIDS), None)
+    DerivativeMaker().create_jp2(SOURCE_DIR, DERIVATIVE_DIR, random.choice(UUIDS), None)
     assert len(os.listdir(DERIVATIVE_DIR)) == PAGE_COUNT
 
 def teardown():

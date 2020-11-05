@@ -6,6 +6,7 @@ import shortuuid
 from clients import ArchivesSpaceClient, AWSClient
 from derivatives import DerivativeMaker
 from create_manifest import ManifestMaker
+from helpers import matching_files
 
 
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
@@ -36,22 +37,21 @@ class IIIFPipeline:
         for path in [jp2_dir, pdf_dir, manifest_dir]:
             if not os.path.exists(path):
                 os.makedirs(path)
-        excluded_directories = set([source_dir,
-                                    jp2_dir,
-                                    pdf_dir,
-                                    manifest_dir])
-        directories = [x[0] for x in os.walk(source_dir) if x[0] not in excluded_directories]
+        excluded_directories = set([jp2_dir, pdf_dir, manifest_dir])
+        directories = [d for d in os.listdir(source_dir) if (os.isdir(d) and d not in excluded_directories)]
         for directory in directories:
             ref_id = directory.split('/')[-1]
             try:
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
-                DerivativeMaker().create_jp2(directory, jp2_dir, identifier, skip)
+                DerivativeMaker().create_jp2(matching_files(directory, skip=skip, prepend=True), jp2_dir, identifier)
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl")).create_manifest(
-                        jp2_dir, manifest_dir, identifier, obj_data)
-                DerivativeMaker().make_pdf(pdf_dir)
-                aws_client.upload_files(jp2_dir, manifest_dir)
+                        matching_files(jp2_dir, prefix=identifier), jp2_dir, manifest_dir, identifier, obj_data)
+                DerivativeMaker().make_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
+                aws_client.upload_files(matching_files(jp2_dir, prefix=identifier, prepend=True), jp2_dir)
+                aws_client.upload_files(matching_files(pdf_dir, prefix=identifier, prepend=True), pdf_dir)
+                # TODO: add cleanup function
             except Exception as e:
                 # TODO: add cleanup function
                 logging.error(e)

@@ -1,6 +1,23 @@
 # iiif-image-scripts
 Repository for the RAC's iiif imaging scripts (derivative and manifest creation)
 
+## Quick start
+
+The Dockerfile included in this repository will allow you to run these scripts without installing dependencies locally.
+
+First, build the image:
+
+    $ docker build . -t iiif-scripts
+
+Then, run the container, mounting any local directories you need access to, and entering the container in interactive mode:
+
+    $ docker run -it -v /my/local/dir:/path/in/container iiif-scripts /bin/bash
+
+That will get you a bash command prompt, at which point you can execute the scripts, for example:
+
+    $ python main.py /path/in/container
+
+
 ## `main.py`
 
 Main wrapper script for running the four scripts together. Point it at a directory containing multiple other directories of tiff image files. Will create JP2 copies from those files, a manifest file, and upload JP2 files and manifests to an AWS bucket. Assumes each directory is an ArchivesSpace refid.

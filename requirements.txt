@@ -1,0 +1,9 @@
+ArchivesSnake==0.9
+boto3==1.16.8
+iiif-prezi==0.3.0
+img2pdf==0.4.0
+Pillow==8.0.1
+pytest==4.3.0
+python-magic==0.4.18
+shortuuid==1.0.1
+vcrpy==4.1.0

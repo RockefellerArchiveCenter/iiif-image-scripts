@@ -1,0 +1,11 @@
+language: python
+services:
+- docker
+before_install:
+  - cp local_settings.cfg.example local_settings.cfg
+install:
+  - docker build . -t iiif-pipeline
+script:
+- docker run -it iiif-pipeline python -m pytest
+notifications:
+  email: false

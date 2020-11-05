@@ -28,8 +28,7 @@ def setup():
 def test_object_in_bucket():
     s3 = botocore.session.get_session().create_client("s3")
     head_response = {}  # TODO: add a response for head_object
-    upload_response = {}  # TODO: add response for upload_object
-    expected_params = {'Bucket': ANY}
+    expected_params = {'Bucket': ANY}  # TODO: add expected_params
     with Stubber(s3) as stubber:
         stubber.add_response("head_object", head_response, expected_params)
         found = AWSClient().object_in_bucket(DERIVATIVE_DIR, MANIFEST_DIR)

@@ -4,7 +4,7 @@ from asnake import utils
 from asnake.aspace import ASpace
 from configparser import ConfigParser
 
-class GetObject:
+class ArchivesSpaceClient:
     def __init__(self):
             self.config = ConfigParser()
             self.config.read("local_settings.cfg")
@@ -13,54 +13,34 @@ class GetObject:
                             password=self.config.get("ArchivesSpace", "password"),
                             repository=self.config.get("ArchivesSpace", "repository")).client
 
-    def run(self, ident):
+    def get_object(self, ref_id):
         """Gets archival object title and date from an ArchivesSpace refid.
 
         Args:
             ident (str): an ArchivesSpace refid.
         Returns:
-            ao (dict): A dictionary representation of an archival object from ArchivesSpace.
-                Empty if no matching object is found.
-            title (str): string representation of the closest title to the archival object.
-            date (str): string representation of the closest date to the archival object.
+            obj (dict): A dictionary representation of an archival object from ArchivesSpace.
         """
-        title, date = '', ''
-        ao = self.get_ao(ident)
-        if ao:
-            title, date = self.get_title_date(ao)
-            return ao, title, date
+        results = self.client.get(
+            'repositories/{}/find_by_id/archival_objects?ref_id[]={}'.format(
+                self.config.get("ArchivesSpace", "repository"), ref_id)).json()
+        if not results.get("archival_objects"):
+            raise Exception("Could not find an ArchivesSpace object matching refid: {}".format(ref_id))
         else:
-            ao = {}
-            return ao, title, date
+            obj_uri = results["archival_objects"][0]["ref"]
+            obj = self.client.get(obj_uri).json()
+            if not obj.get("dates"):
+                obj["dates"] = utils.find_closest_value(obj, 'dates', self.client)
+            return self.format_data(obj)
 
-    def get_ao(self, refid):
-        """Gets a JSON representation of an archival object.
+    def format_data(self, data):
+        """Parses ArchivesSpace data.
 
         Args:
-            refid (str): an ArchivesSpace refid
+            data (dict): ArchivesSpace data.
         Returns:
-            ao (dict): a JSON representation of an archival object
+            parsed (dict): Parsed data, with only required fields present.
         """
-        refs = self.client.get('repositories/2/find_by_id/archival_objects?ref_id[]={}'.format(refid)).json()
-        if not refs.get("archival_objects"):
-            logging.error("Could not find an ArchivesSpace object matching refid: {}".format(refid))
-        else:
-            ao_id = refs.get("archival_objects")[0].get("ref")
-            ao = self.client.get(ao_id).json()
-            return ao
-
-    def get_title_date(self, archival_object):
-        """Gets the closest title and date to an archival object by looking through its
-        ancestors.
-
-        Args:
-            archival_object (dict): a JSON representation of an archival object
-        Returns:
-            title (str): A string representation of of a title.
-            date (str): A string representation of a date expression.
-        """
-        ao_title = utils.find_closest_value(archival_object, 'title', self.client)
-        ao_date = utils.find_closest_value(archival_object, 'dates', self.client)
-        expressions = [date.get('expression') for date in ao_date]
-        ao_date = ', '.join([str(expression) for expression in expressions])
-        return ao_title, ao_date
+        title = data.get("title", data.get("display_string")).title()
+        dates = ", ".join([utils.get_date_display(d, self.client) for d in data.get("dates", [])])
+        return {"title": title, "dates": dates}

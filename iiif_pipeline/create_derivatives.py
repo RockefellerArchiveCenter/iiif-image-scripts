@@ -11,7 +11,7 @@ from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
 
-    def run(self, source_dir, derivative_dir, uuid, skip):
+    def create_jp2(self, source_dir, derivative_dir, uuid, skip):
         """Iterates over files in a directory and creates derivative JP2 files for
         each on if it is a valid tiff file.
 

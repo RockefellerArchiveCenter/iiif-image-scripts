@@ -3,7 +3,7 @@ import os
 
 class PDFMaker:
 
-    def run(self, derivative_dir):
+    def make_pdf(self, derivative_dir):
         identifiers = self.get_identifiers(derivative_dir)
         for ident in identifiers:
             files = [os.path.join(derivative_dir, file) for file in sorted(os.listdir(derivative_dir)) if file.startswith(ident)]
@@ -20,14 +20,3 @@ class PDFMaker:
         """
         identifiers = [file.split('_')[0] for file in os.listdir(image_dir) if not file.startswith('.')]
         return list(set(identifiers))
-
-    def get_matching_files(self, ident, image_dir):
-        """Get a list of files that start with a specific refid.
-        Args:
-            ident (str): a string representation of an ArchivesSpace refid.
-            image_dir (str): a string representation of the directory containing image files.
-        Returns:
-            files (lst): a list of files that matched the identifier.
-        """
-        files = ["{}{}".format(image_dir, file) for file in os.listdir(image_dir) if file.startswith(ident)]
-        return files

@@ -6,7 +6,7 @@ import os
 from configparser import ConfigParser
 from botocore.exceptions import ClientError
 
-class UploadFiles:
+class AWSClient:
     def __init__(self):
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
@@ -16,7 +16,7 @@ class UploadFiles:
                             aws_secret_access_key=self.config.get("S3", "aws_secret_access_key"))
         self.bucket = self.config.get("S3", "bucketname")
 
-    def upload_s3(self, derivative_dir, manifest_dir):
+    def upload_files(self, derivative_dir, manifest_dir):
         """Iterates over directories and conditionally uploads files to S3.
 
         Args:
@@ -27,7 +27,7 @@ class UploadFiles:
             for file in os.listdir(dir):
                 if not file.startswith('.'):
                     key = file.split(".")[0]
-                    if self.s3_check(key, dir):
+                    if self.object_in_bucket(key, dir):
                         logging.error("{} already exists in {}".format(key, self.bucket))
                     else:
                         if file.endswith(".json"):
@@ -38,7 +38,7 @@ class UploadFiles:
                                                         self.bucket, os.path.join(dir.split("/")[-1], key),
                                                         ExtraArgs={'ContentType': type})
 
-    def s3_check(self, key, dir):
+    def object_in_bucket(self, key, dir):
         """Checks if a file already exists in an S3 bucket.
 
         Args:

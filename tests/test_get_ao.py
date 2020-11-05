@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import patch
 
 from helpers import archivesspace_vcr, random_string
-from iiif_pipeline.get_ao import ArchivesSpaceClient
+from iiif_pipeline.clients import ArchivesSpaceClient
 
 def test_run():
     found_refid = "aspace_b1f076a9f49d369034188c232f7cdf25"

@@ -6,7 +6,7 @@ import botocore.session
 from botocore.stub import Stubber, ANY
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.aws_upload import AWSClient
+from iiif_pipeline.clients import AWSClient
 
 
 MANIFEST_FIXTURES = os.path.join("fixtures", "manifests")

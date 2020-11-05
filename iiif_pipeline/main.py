@@ -3,10 +3,9 @@ import logging
 import os
 import shortuuid
 
-from aws_upload import AWSClient
+from clients import ArchivesSpaceClient, AWSClient
 from derivatives import DerivativeMaker
 from create_manifest import ManifestMaker
-from get_ao import ArchivesSpaceClient
 
 
 parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")

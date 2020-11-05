@@ -39,7 +39,7 @@ class ManifestMaker:
         self.set_thumbnail(manifest, files[0].split('.')[0])
         for file in files:
             page_number = page_number + 1
-            width, height, path = self.get_image_info(image_dir, file)
+            width, height = self.get_image_info(image_dir, file)
             page_ref = file[:-4]
             cvs = self.set_canvas_data(seq, page_ref, page_number, width, height)
             anno = cvs.annotation(ident=page_ref)
@@ -77,19 +77,6 @@ class ManifestMaker:
         files = [file for file in os.listdir(image_dir) if file.startswith(ident)]
         return files
 
-    def get_dimensions(self, file):
-        """Get the pixel height and width of an image file.
-
-        Args:
-            file (str): an image filename
-        Returns:
-            image_width (int): pixel width of an image
-            image_height (int): pixel height of an image
-        """
-        with Image.open(file) as img:
-            image_width, image_height = img.size
-            return image_width, image_height
-
     def set_canvas_data(self, sequence, ref, page_number, width, height):
         """Sets canvas information.
 
@@ -116,11 +103,10 @@ class ManifestMaker:
         Returns:
             width (int): Pixel width of the image file
             height (int): Pixel height of the image file
-            path (str): Concatenated path to the source image file.
         """
-        path = os.path.join(image_dir, file)
-        width, height = self.get_dimensions(path)
-        return width, height, path
+        with Image.open(os.path.join(image_dir, file)) as img:
+            width, height = img.size
+        return width, height
 
     def set_image_data(self, height, width, page_ref, annotation):
         """Sets the image height and width. Creates the image object.

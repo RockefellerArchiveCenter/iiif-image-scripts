@@ -21,10 +21,12 @@ def setup():
     copy_sample_files(DERIVATIVE_DIR, UUIDS, PAGE_COUNT, "jp2")
     os.makedirs(MANIFEST_DIR)
 
-def test_run():
+def test_create_manifest():
     """Ensures a correctly-named manifest is created."""
     uuid = random.choice(UUIDS)
-    ManifestMaker().run(DERIVATIVE_DIR, MANIFEST_DIR, uuid, random_string(), random_string())
+    ManifestMaker("http://example.com").create_manifest(
+        DERIVATIVE_DIR, MANIFEST_DIR, uuid,
+        {"title": random_string(), "dates": random_string()})
     assert len(os.listdir(MANIFEST_DIR)) == 1
     assert os.path.isfile(os.path.join(MANIFEST_DIR, "{}.json".format(uuid)))
 

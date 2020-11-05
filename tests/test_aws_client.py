@@ -6,7 +6,7 @@ import botocore.session
 from botocore.stub import Stubber, ANY
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.aws_upload import UploadFiles
+from iiif_pipeline.clients import AWSClient
 
 
 MANIFEST_FIXTURES = os.path.join("fixtures", "manifests")
@@ -25,13 +25,13 @@ def setup():
     copy_sample_files(DERIVATIVE_DIR, UUIDS, PAGE_COUNT, "jp2")
     copy_sample_files(MANIFEST_DIR, UUIDS, PAGE_COUNT, "json")
 
-def test_s3_check():
+def test_object_in_bucket():
     s3 = botocore.session.get_session().create_client("s3")
     head_response = {}  # TODO: add a response for head_object
     expected_params = {'Bucket': ANY}  # TODO: add expected_params
     with Stubber(s3) as stubber:
         stubber.add_response("head_object", head_response, expected_params)
-        found = UploadFiles().s3_check(DERIVATIVE_DIR, MANIFEST_DIR)
+        found = AWSClient().object_in_bucket(DERIVATIVE_DIR, MANIFEST_DIR)
         assert found == False
 
 # TODO: tests for run method.

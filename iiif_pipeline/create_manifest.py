@@ -1,20 +1,16 @@
-import logging
 import os
 
-from configparser import ConfigParser
 from iiif_prezi.factory import ManifestFactory
 from PIL import Image
 
 class ManifestMaker:
 
-    def __init__(self):
-        self.config = ConfigParser()
-        self.config.read("local_settings.cfg")
+    def __init__(self, server_url):
         self.fac = ManifestFactory()
-        self.server_url = self.config.get("ImageServer", "imageurl")
-        self.resource_url = "{}/iiif/2/".format(self.server_url)
+        self.server_url = server_url
+        self.resource_url = "{}/iiif/2/".format(server_url)
 
-    def run(self, image_dir, manifest_dir, uuid, title, date):
+    def create_manifest(self, image_dir, manifest_dir, uuid, obj_data):
         """Method that runs the other methods to build a manifest file and populate
         it with information.
 
@@ -22,8 +18,7 @@ class ManifestMaker:
             image_dir (str): Path to directory containing derivative image files.
             manifest_dir (str): Path to directory to save manifest files.
             uuid (str): A unique identifier.
-            title (str): String title of the archival object the manifest refers to.
-            date (str): String date of the archival object the manifest refers to.
+            obj_data (dict): Data about the archival object.
         """
 
         self.fac.set_debug("error")
@@ -32,7 +27,7 @@ class ManifestMaker:
         self.fac.set_base_image_uri("{}/".format(self.resource_url))
 
         page_number = 0
-        manifest = self.set_manifest_data(uuid, title, date)
+        manifest = self.set_manifest_data(uuid, obj_data)
         seq = manifest.sequence(ident="{}.json".format(uuid))
         files = sorted(self.get_matching_files(uuid, image_dir))
         self.set_thumbnail(manifest, files[0].split('.')[0])
@@ -46,22 +41,20 @@ class ManifestMaker:
             self.set_thumbnail(cvs, page_ref, height=height, width=width)
         manifest.toFile(compact=False)
         manifest_file = '{}{}.json'.format(manifest_dir, uuid)
-        logging.info("Created manifest {}.json".format(uuid))
 
 
-    def set_manifest_data(self, identifier, title, date):
+    def set_manifest_data(self, identifier, obj_data):
         """Sets the manifest title, date, and instantiates the manifest.
 
         Args:
             identifier (str): a unique identifier to use for the manifest identifier.
-            title (str): string representation of the object's title.
-            date (str): string representation of the object's date.
+            obj_data (dict): Data about the archival object.
         Returns:
-            manifest (dict): a JSON IIIF manifest
+            manifest (dict): a Manifest object
         """
-        manifest_label = title.title()
+        manifest_label = obj_data["title"]
         manifest = self.fac.manifest(ident=identifier, label=manifest_label)
-        manifest.set_metadata({"Date": date})
+        manifest.set_metadata({"Date": obj_data["dates"]})
         return manifest
 
     def get_matching_files(self, ident, image_dir):

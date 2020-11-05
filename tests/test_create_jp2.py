@@ -4,6 +4,7 @@ import shutil
 
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.derivatives import DerivativeMaker
+from iiif_pipeline.helpers import matching_files
 
 
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")
@@ -23,7 +24,7 @@ def setup():
 
 def test_create_jp2():
     """Ensure the run method produces the expected number of files."""
-    DerivativeMaker().create_jp2(SOURCE_DIR, DERIVATIVE_DIR, random.choice(UUIDS), None)
+    DerivativeMaker().create_jp2(matching_files(SOURCE_DIR, skip=False, prepend=True), DERIVATIVE_DIR, random.choice(UUIDS))
     assert len(os.listdir(DERIVATIVE_DIR)) == PAGE_COUNT
 
 def teardown():

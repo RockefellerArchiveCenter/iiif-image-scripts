@@ -60,29 +60,27 @@ class AWSClient:
                             aws_secret_access_key=self.config.get("S3", "aws_secret_access_key"))
         self.bucket = self.config.get("S3", "bucketname")
 
-    def upload_files(self, derivative_dir, manifest_dir):
+    def upload_files(self, files, destination_dir):
         """Iterates over directories and conditionally uploads files to S3.
 
         Args:
-            derivative_dir (str): Directory path to derivative image files.
-            manifest_dir (str): Directory path to manifest files.
+            files (list): Filepaths to be uploaded.
+            destination_dir: Path in the bucket in which the file should be stored.
         """
-        for dir in [derivative_dir, manifest_dir]:
-            for file in os.listdir(dir):
-                if not file.startswith('.'):
-                    key = file.split(".")[0]
-                    if self.object_in_bucket(key, dir):
-                        logging.error("{} already exists in {}".format(key, self.bucket))
-                    else:
-                        if file.endswith(".json"):
-                            type = "application/json"
-                        else:
-                            type = magic.from_file(os.path.join(dir, file), mime=True)
-                        self.s3.meta.client.upload_file(os.path.join(dir, file),
-                                                        self.bucket, os.path.join(dir.split("/")[-1], key),
-                                                        ExtraArgs={'ContentType': type})
+        for file in files:
+            key = os.path.splitext(os.path.basename(file))[0]
+            if self.object_in_bucket(destination_dir, key):
+                logging.error("{} already exists in {}".format(key, self.bucket))
+            else:
+                if file.endswith(".json"):
+                    type = "application/json"
+                else:
+                    type = magic.from_file(file, mime=True)
+                self.s3.meta.client.upload_file(
+                    file, self.bucket, os.path.join(destination_dir, key),
+                    ExtraArgs={'ContentType': type})
 
-    def object_in_bucket(self, key, dir):
+    def object_in_bucket(self, destination_dir, key):
         """Checks if a file already exists in an S3 bucket.
 
         Args:
@@ -92,7 +90,7 @@ class AWSClient:
             boolean: True if file exists, false otherwise.
         """
         try:
-            self.s3.Object(self.bucket, os.path.join(dir.split("/")[-1], key)).load()
+            self.s3.Object(self.bucket, os.path.join(destination_dir, key)).load()
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == "404":

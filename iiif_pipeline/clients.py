@@ -12,7 +12,8 @@ class ArchivesSpaceClient:
                 baseurl=baseurl,
                 username=username,
                 password=password,
-                repository=repository)).client
+                repository=repository).client
+            self.repository = repository
 
     def get_object(self, ref_id):
         """Gets archival object title and date from an ArchivesSpace refid.
@@ -23,15 +24,13 @@ class ArchivesSpaceClient:
             obj (dict): A dictionary representation of an archival object from ArchivesSpace.
         """
         results = self.client.get(
-            'repositories/{}/find_by_id/archival_objects?ref_id[]={}'.format(
-                self.config.get("ArchivesSpace", "repository"), ref_id)).json()
+            'repositories/{}/find_by_id/archival_objects?ref_id[]={}'.format(self.repository, ref_id)).json()
         if not results.get("archival_objects"):
             raise Exception("Could not find an ArchivesSpace object matching refid: {}".format(ref_id))
         else:
-            obj_uri = results["archival_objects"][0]["ref"]
-            obj = self.client.get(obj_uri).json()
-            if not obj.get("dates"):
-                obj["dates"] = utils.find_closest_value(obj, 'dates', self.client)
+            obj_ref = results["archival_objects"][0]["ref"]
+            obj = self.client.get(obj_ref).json()
+            obj["dates"] = utils.find_closest_value(obj, 'dates', self.client)
             return self.format_data(obj)
 
     def format_data(self, data):
@@ -70,12 +69,13 @@ class AWSClient:
                 pass
             else:
                 if file.endswith(".json"):
-                    type = "application/json"
+                    content_type = "application/json"
                 else:
-                    type = magic.from_file(file, mime=True)
+                    # TODO: evaluate if we need to use this library or if mimetypes will work?
+                    content_type = magic.from_file(file, mime=True)
                 self.s3.meta.client.upload_file(
                     file, self.bucket, os.path.join(destination_dir, key),
-                    ExtraArgs={'ContentType': type})
+                    ExtraArgs={'ContentType': content_type})
 
     def object_in_bucket(self, destination_dir, key):
         """Checks if a file already exists in an S3 bucket.

@@ -45,12 +45,17 @@ class IIIFPipeline:
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
                 DerivativeMaker().create_jp2(matching_files(directory, skip=skip, prepend=True), jp2_dir, identifier)
+                logging.info("JPEG2000 derivatives created for {}".format(identifier))
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl")).create_manifest(
                         matching_files(jp2_dir, prefix=identifier), jp2_dir, manifest_dir, identifier, obj_data)
+                logging.info("IIIF Manifest created for {}".format(identifier))
                 DerivativeMaker().make_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
+                logging.info("Concatenated PDF created for {}".format(identifier))
                 aws_client.upload_files(matching_files(jp2_dir, prefix=identifier, prepend=True), jp2_dir)
+                logging.info("JPEG2000 files uploaded for {}".format(identifier))
                 aws_client.upload_files(matching_files(pdf_dir, prefix=identifier, prepend=True), pdf_dir)
+                logging.info("PDF file uploaded for {}".format(identifier))
                 # TODO: add cleanup function
             except Exception as e:
                 # TODO: add cleanup function

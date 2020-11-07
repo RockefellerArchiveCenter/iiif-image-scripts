@@ -1,4 +1,3 @@
-import logging
 import math
 import mimetypes
 import os
@@ -27,16 +26,19 @@ class DerivativeMaker:
         for original_file in files:
             derivative_file = self.make_filename(derivative_dir, original_file, uuid)
             if os.path.isfile(derivative_file):
-                logging.error("{} already exists".format(derivative_file))
+                pass
+                # TODO: handle replace
             else:
                 if self.is_tiff(original_file):
-                    resolutions = self.calculate_layers(original_file)
-                    cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                        original_file, derivative_file, resolutions, ' '.join(default_options))
-                    result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
-                    logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
+                    try:
+                        resolutions = self.calculate_layers(original_file)
+                        cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
+                            original_file, derivative_file, resolutions, ' '.join(default_options))
+                        result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                    except Exception as e:
+                        raise Exception("Error creating JPEG2000: {}".format(e)) from e
                 else:
-                    logging.error("{} is not a valid tiff file".format(original_file))
+                    raise Exception("Error creating JPEG2000: {} is not a valid TIFF".format(original_file))
 
     def create_pdf(self, files, identifier, pdf_dir):
         """Creates concatenated PDFS from JPEG2000 files.
@@ -46,8 +48,11 @@ class DerivativeMaker:
             identifier (str): Identifier of created PDF file.
             pdf_dir (str): Directory in which to save the PDF file.
         """
-        with open("{}.pdf".format(os.path.join(pdf_dir, identifier)), "wb") as f:
-            f.write(img2pdf.convert(files))
+        try:
+            with open("{}.pdf".format(os.path.join(pdf_dir, identifier)), "wb") as f:
+                f.write(img2pdf.convert(files))
+        except Exception as e:
+            raise Exception("Error creating pdf: {}".format(e)) from e
 
     def make_filename(self, end_directory, file, uuid):
         """Make derivative filenames based on original filenames.
@@ -90,7 +95,4 @@ class DerivativeMaker:
             boolean: True if tiff file, false otherwise.
         """
         type = mimetypes.MimeTypes().guess_type(file)[0]
-        if type == "image/tiff":
-            return True
-        else:
-            return False
+        return True if type == "image/tiff" else False

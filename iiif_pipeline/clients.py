@@ -1,5 +1,4 @@
 import boto3
-import logging
 import magic
 import os
 
@@ -70,7 +69,8 @@ class AWSClient:
         for file in files:
             key = os.path.splitext(os.path.basename(file))[0]
             if self.object_in_bucket(destination_dir, key):
-                logging.error("{} already exists in {}".format(key, self.bucket))
+                # TODO: provide replace handling
+                pass
             else:
                 if file.endswith(".json"):
                     type = "application/json"
@@ -96,5 +96,4 @@ class AWSClient:
             if e.response['Error']['Code'] == "404":
                 return False
             else:
-                logging.error(e)
-                return False
+                raise Exception from e

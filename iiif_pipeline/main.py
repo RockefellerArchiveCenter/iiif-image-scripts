@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import shortuuid
+from configparser import ConfigParser
 
 from clients import ArchivesSpaceClient, AWSClient
 from derivatives import DerivativeMaker
@@ -19,7 +20,8 @@ class IIIFPipeline:
         logfile = 'iiif_generation.log'
         logging.basicConfig(filename=logfile,
                             level=logging.INFO)
-        self.config = ConfigParser().read("local_settings.cfg")
+        self.config = ConfigParser()
+        self.config.read("local_settings.cfg")
 
     def run(self, source_dir, skip):
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
@@ -55,8 +57,8 @@ class IIIFPipeline:
                 DerivativeMaker().create_jp2(matching_files(directory, skip=skip, prepend=True), jp2_dir, identifier)
                 logging.info("JPEG2000 derivatives created for {}".format(identifier))
                 ManifestMaker(
-                    self.config.get("ImageServer", "baseurl")).create_manifest(
-                        matching_files(jp2_dir, prefix=identifier), jp2_dir, manifest_dir, identifier, obj_data)
+                    self.config.get("ImageServer", "baseurl"), manifest_dir).create_manifest(
+                        matching_files(jp2_dir, prefix=identifier), jp2_dir, identifier, obj_data)
                 logging.info("IIIF Manifest created for {}".format(identifier))
                 DerivativeMaker().make_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
                 logging.info("Concatenated PDF created for {}".format(identifier))

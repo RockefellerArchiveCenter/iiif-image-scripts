@@ -41,6 +41,12 @@ def is_tiff(file):
 def create_jp2(files, derivative_dir, identifier):
     """Creates JPEG2000 files from TIFF files.
 
+    The default options for conversion below are:
+    - Compression ration of `1.5`
+    - Precinct size: `[256,256]` for first two layers and then `[128,128]` for all others
+    - Code block size of `[64,64]`
+    - Progression order of `RPCL`
+
     Args:
         files (list): Filepaths for source files, which include source directory.
         derivative_dir (str): Path to directory location to save JP2 files.

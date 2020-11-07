@@ -6,7 +6,7 @@ from configparser import ConfigParser
 
 from clients import ArchivesSpaceClient, AWSClient
 from derivatives import DerivativeMaker
-from create_manifest import ManifestMaker
+from manifests import ManifestMaker
 from helpers import matching_files
 
 

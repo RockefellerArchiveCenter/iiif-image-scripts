@@ -3,7 +3,7 @@ import random
 import shutil
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.create_manifest import ManifestMaker
+from iiif_pipeline.manifests import ManifestMaker
 from iiif_pipeline.helpers import matching_files
 
 

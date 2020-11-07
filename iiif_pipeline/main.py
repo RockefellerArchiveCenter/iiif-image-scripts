@@ -29,8 +29,16 @@ class IIIFPipeline:
             skip (bool): Boolean that indicates whether the derivative creation script should skip
                 files ending with `_001`.
         """
-        as_client = ArchivesSpaceClient() # TODO: the config values for these should be passed in here
-        aws_client = AWSClient() # TODO: the config values for these should be passed in here
+        as_client = ArchivesSpaceClient(
+            self.config.get("ArchivesSpace", "baseurl"),
+            self.config.get("ArchivesSpace", "username"),
+            self.config.get("ArchivesSpace", "password"),
+            self.config.get("ArchivesSpace", "repository"))
+        aws_client = AWSClient(
+            self.config.get("S3", "region_name"),
+            self.config.get("S3", "aws_access_key_id"),
+            self.config.get("S3", "aws_secret_access_key"),
+            self.config.get("S3", "bucketname"))
         jp2_dir = os.path.join(source_dir, "images")
         pdf_dir = os.path.join(source_dir, "pdfs")
         manifest_dir = os.path.join(source_dir, "manifests")

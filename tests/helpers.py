@@ -3,6 +3,7 @@ import random
 import shutil
 import string
 import vcr
+from configparser import ConfigParser
 
 
 archivesspace_vcr = vcr.VCR(
@@ -30,6 +31,12 @@ def copy_sample_files(dir, identifiers, page_count, suffix):
                     os.path.join(dir, f),
                     os.path.join(dir, "{}_{}.{}".format(ident, page, suffix)))
         os.remove(os.path.join(dir, f))
+
+
+def get_config():
+    config = ConfigParser()
+    config.read("local_settings.cfg")
+    return config
 
 
 def random_string(length=10):

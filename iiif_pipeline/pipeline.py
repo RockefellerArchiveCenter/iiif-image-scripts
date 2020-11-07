@@ -1,19 +1,13 @@
-import argparse
 import logging
 import os
 import shortuuid
 from configparser import ConfigParser
 
-from clients import ArchivesSpaceClient, AWSClient
-from derivatives import create_jp2, create_pdf
-from manifests import ManifestMaker
-from helpers import matching_files
+from .clients import ArchivesSpaceClient, AWSClient
+from .derivatives import create_jp2, create_pdf
+from .manifests import ManifestMaker
+from .helpers import matching_files
 
-
-parser = argparse.ArgumentParser(description="Generates JPEG2000 images from TIF files based on input and output directories")
-parser.add_argument("source_directory", help="The full directory path of the original image files to create derivatives from (ex. /Documents/originals/)")
-parser.add_argument("--skip", help="Skips files ending in `_001` during derivative creation.")
-args = parser.parse_args()
 
 class IIIFPipeline:
     def __init__(self):
@@ -72,5 +66,3 @@ class IIIFPipeline:
                 # TODO: add cleanup function
                 logging.error(e)
                 pass
-
-IIIFPipeline().run(args.source_directory, args.skip)

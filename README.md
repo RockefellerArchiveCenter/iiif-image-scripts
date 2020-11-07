@@ -15,7 +15,7 @@ Then, run the container, mounting any local directories you need access to, and 
 
 That will get you a bash command prompt, at which point you can execute the scripts, for example:
 
-    $ python iiif_pipeline/main.py /path/in/container
+    $ python iiif-pipeline.py /path/in/container
 
 
 ## Requirements
@@ -38,7 +38,7 @@ It also requires these Python libraries in order to work correctly.
 
 This library is designed to be executed from the command line:
 
-    $ main.py source_directory [--skip SKIP]
+    $ iiif-pipeline.py source_directory [--skip SKIP]
 
 where `source_directory` is a path to a directory containing subdirectories of
 original TIFF files and the optional `--skip` flag will skip image files with

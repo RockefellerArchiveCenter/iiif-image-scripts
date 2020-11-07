@@ -31,6 +31,8 @@ class IIIFPipeline:
             skip (bool): Boolean that indicates whether the derivative creation script should skip
                 files ending with `_001`.
         """
+        if not os.path.isdir(source_dir):
+            raise Exception("{} is not a path to a directory.".format(source_dir))
         as_client = ArchivesSpaceClient(
             self.config.get("ArchivesSpace", "baseurl"),
             self.config.get("ArchivesSpace", "username"),
@@ -47,8 +49,7 @@ class IIIFPipeline:
         for path in [jp2_dir, pdf_dir, manifest_dir]:
             if not os.path.exists(path):
                 os.makedirs(path)
-        excluded_directories = set([jp2_dir, pdf_dir, manifest_dir])
-        directories = [d for d in os.listdir(source_dir) if (os.isdir(d) and d not in excluded_directories)]
+        directories = [d for d in os.listdir(source_dir) if (os.path.isdir(d) and d not in [jp2_dir, pdf_dir, manifest_dir])]
         for directory in directories:
             ref_id = directory.split('/')[-1]
             try:
@@ -70,5 +71,6 @@ class IIIFPipeline:
             except Exception as e:
                 # TODO: add cleanup function
                 logging.error(e)
+                pass
 
 IIIFPipeline().run(args.source_directory, args.skip)

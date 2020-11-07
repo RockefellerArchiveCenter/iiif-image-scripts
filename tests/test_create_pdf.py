@@ -4,26 +4,30 @@ import shutil
 
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.derivatives import DerivativeMaker
+from iiif_pipeline.helpers import matching_files
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
 DERIVATIVE_DIR = os.path.join("/", "derivatives")
+PDF_DIR = os.path.join("/", "pdfs")
 UUIDS = [random_string() for x in range(random.randint(1,3))]
 PAGE_COUNT = random.randint(1,5)
 
 def setup():
     """Sets up derivative directory."""
-    if os.path.isdir(DERIVATIVE_DIR):
-        shutil.rmtree(DERIVATIVE_DIR)
+    for d in [DERIVATIVE_DIR, PDF_DIR]:
+        if os.path.isdir(d):
+            shutil.rmtree(d)
     shutil.copytree(FIXTURE_FILEPATH, DERIVATIVE_DIR)
     copy_sample_files(DERIVATIVE_DIR, UUIDS, PAGE_COUNT, "jp2")
+    os.makedirs(PDF_DIR)
 
-def test_make_pdf():
+def test_create_pdf():
     """Ensure the run method produces the expected number of files."""
     initial_length = len(os.listdir(DERIVATIVE_DIR))
-    DerivativeMaker().create_pdf(DERIVATIVE_DIR)
-    assert len(os.listdir(DERIVATIVE_DIR)) == initial_length + len(UUIDS)
-    for uuid in UUIDS:
-        assert os.path.isfile(os.path.join(DERIVATIVE_DIR, "{}.pdf".format(uuid)))
+    identifier = random.choice(UUIDS)
+    DerivativeMaker().create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
+    assert len(os.listdir(PDF_DIR)) == 1
+    assert os.path.isfile(os.path.join(PDF_DIR, "{}.pdf".format(identifier)))
 
 def teardown():
     """Remove derivative directory."""

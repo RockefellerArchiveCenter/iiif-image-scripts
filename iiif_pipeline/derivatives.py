@@ -11,68 +11,58 @@ from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
 
-    def create_jp2(self, source_dir, derivative_dir, uuid, skip):
-        """Iterates over files in a directory and creates derivative JP2 files for
-        each on if it is a valid tiff file.
+    def create_jp2(self, files, derivative_dir, uuid):
+        """Creates JPEG2000 files from TIFF files.
 
         Args:
-            source_dir (str): Path to directory containing source image files (tiffs).
+            files (list): Filepaths for source files, which include source directory.
             derivative_dir (str): Path to directory location to save JP2 files.
             uuid (str): A unique identifier to use for derivative image filenaming.
-            skip (bool): Boolean that tells the script whether to skip files
-                ending with `_001`.
         """
         default_options = ["-r 1.5",
                            "-c [256,256],[256,256],[128,128]",
                            "-b 64,64",
                            "-p RPCL"
                            ]
-
-        files = [file for file in os.listdir(source_dir)]
-        if skip is not None:
-            for file in files:
-                if file.split('.')[0].endswith('_001'):
-                    files.remove(file)
-        for file in files:
-                original_file, derivative_file = self.make_filenames(source_dir, derivative_dir, file, uuid)
-                identifier = re.split('[/.]', derivative_file)[-2]
-                if os.path.isfile(derivative_file):
-                    logging.error("{} already exists".format(derivative_file))
+        for original_file in files:
+            derivative_file = self.make_filename(derivative_dir, original_file, uuid)
+            if os.path.isfile(derivative_file):
+                logging.error("{} already exists".format(derivative_file))
+            else:
+                if self.is_tiff(original_file):
+                    resolutions = self.calculate_layers(original_file)
+                    cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
+                        original_file, derivative_file, resolutions, ' '.join(default_options))
+                    result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                    logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
                 else:
-                    if self.is_tiff(original_file):
-                        resolutions = self.calculate_layers(original_file)
-                        cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                            original_file, derivative_file, resolutions, ' '.join(default_options))
-                        result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
-                        logging.info(result.decode().replace('\n', ' ').replace('[INFO]', ''))
-                    else:
-                        logging.error("{} is not a valid tiff file".format(original_file))
+                    logging.error("{} is not a valid tiff file".format(original_file))
 
-    def create_pdf(self, derivative_dir):
-        identifiers = list(set([file.split('_')[0] for file in os.listdir(derivative_dir) if not file.startswith('.')]))
-        for ident in identifiers:
-            files = [os.path.join(derivative_dir, file) for file in sorted(os.listdir(derivative_dir)) if file.startswith(ident)]
-            pdf_name = os.path.join(derivative_dir, ident)
-            with open("{}.pdf".format(pdf_name),"wb") as f:
-                f.write(img2pdf.convert(files))
+    def create_pdf(self, files, identifier, pdf_dir):
+        """Creates concatenated PDFS from JPEG2000 files.
 
-    def make_filenames(self, start_directory, end_directory, file, uuid):
+        Args:
+            files (list): Filepaths of JPEG2000 files.
+            identifier (str): Identifier of created PDF file.
+            pdf_dir (str): Directory in which to save the PDF file.
+        """
+        with open("{}.pdf".format(os.path.join(pdf_dir, identifier)), "wb") as f:
+            f.write(img2pdf.convert(files))
+
+    def make_filename(self, end_directory, file, uuid):
         """Make derivative filenames based on original filenames.
 
         Args:
-            start_directory (str): the start directory with the original files.
             end_directory (str): the ending directory for derivative creation.
             file (str): string representation of a filename.
             uuid (str): unique identifier for the group of objects.
         Returns:
-            original_file (str): concatenated string of original directory and file.
             derivative_file (str): concatenated string of end directory and file.
         """
-        original_file = os.path.join(start_directory, file)
         new_id = file.replace(file.split("_")[0], uuid)
         fname = new_id.split(".")[0]
         derivative_file = os.path.join(end_directory, "{}.jp2".format(fname))
-        return original_file, derivative_file
+        return derivative_file
 
     def calculate_layers(self, file):
         """Calculates the number of layers based on pixel dimensions.

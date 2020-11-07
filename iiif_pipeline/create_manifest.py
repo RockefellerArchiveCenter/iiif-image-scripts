@@ -10,11 +10,12 @@ class ManifestMaker:
         self.server_url = server_url
         self.resource_url = "{}/iiif/2/".format(server_url)
 
-    def create_manifest(self, image_dir, manifest_dir, uuid, obj_data):
+    def create_manifest(self, files, image_dir, manifest_dir, uuid, obj_data):
         """Method that runs the other methods to build a manifest file and populate
         it with information.
 
         Args:
+            files (list): Files to iterate over
             image_dir (str): Path to directory containing derivative image files.
             manifest_dir (str): Path to directory to save manifest files.
             uuid (str): A unique identifier.
@@ -29,7 +30,6 @@ class ManifestMaker:
         page_number = 0
         manifest = self.set_manifest_data(uuid, obj_data)
         seq = manifest.sequence(ident="{}.json".format(uuid))
-        files = sorted(self.get_matching_files(uuid, image_dir))
         self.set_thumbnail(manifest, files[0].split('.')[0])
         for file in files:
             page_number = page_number + 1
@@ -56,18 +56,6 @@ class ManifestMaker:
         manifest = self.fac.manifest(ident=identifier, label=manifest_label)
         manifest.set_metadata({"Date": obj_data["dates"]})
         return manifest
-
-    def get_matching_files(self, ident, image_dir):
-        """Get a list of files that start with a specific refid.
-
-        Args:
-            ident (str): a string representation of an ArchivesSpace refid.
-            image_dir (str): a string representation of the directory containing image files.
-        Returns:
-            files (lst): a list of files that matched the identifier.
-        """
-        files = [file for file in os.listdir(image_dir) if file.startswith(ident)]
-        return files
 
     def set_canvas_data(self, sequence, ref, page_number, width, height):
         """Sets canvas information.

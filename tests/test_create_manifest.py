@@ -4,6 +4,7 @@ import shutil
 
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.create_manifest import ManifestMaker
+from iiif_pipeline.helpers import matching_files
 
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
@@ -25,6 +26,7 @@ def test_create_manifest():
     """Ensures a correctly-named manifest is created."""
     uuid = random.choice(UUIDS)
     ManifestMaker("http://example.com").create_manifest(
+        matching_files(DERIVATIVE_DIR, prefix=uuid),
         DERIVATIVE_DIR, MANIFEST_DIR, uuid,
         {"title": random_string(), "dates": random_string()})
     assert len(os.listdir(MANIFEST_DIR)) == 1

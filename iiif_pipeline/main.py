@@ -5,7 +5,7 @@ import shortuuid
 from configparser import ConfigParser
 
 from clients import ArchivesSpaceClient, AWSClient
-from derivatives import DerivativeMaker
+from derivatives import create_jp2, create_pdf
 from manifests import ManifestMaker
 from helpers import matching_files
 
@@ -55,13 +55,13 @@ class IIIFPipeline:
             try:
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
-                DerivativeMaker().create_jp2(matching_files(directory, skip=skip, prepend=True), jp2_dir, identifier)
+                create_jp2(matching_files(directory, skip=skip, prepend=True), jp2_dir, identifier)
                 logging.info("JPEG2000 derivatives created for {}".format(identifier))
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl"), manifest_dir).create_manifest(
                         matching_files(jp2_dir, prefix=identifier), jp2_dir, identifier, obj_data)
                 logging.info("IIIF Manifest created for {}".format(identifier))
-                DerivativeMaker().make_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
+                create_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
                 logging.info("Concatenated PDF created for {}".format(identifier))
                 aws_client.upload_files(matching_files(jp2_dir, prefix=identifier, prepend=True), jp2_dir)
                 logging.info("JPEG2000 files uploaded for {}".format(identifier))

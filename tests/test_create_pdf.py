@@ -3,7 +3,7 @@ import random
 import shutil
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.derivatives import DerivativeMaker
+from iiif_pipeline.derivatives import create_pdf
 from iiif_pipeline.helpers import matching_files
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
@@ -25,7 +25,7 @@ def test_create_pdf():
     """Ensure the run method produces the expected number of files."""
     initial_length = len(os.listdir(DERIVATIVE_DIR))
     identifier = random.choice(UUIDS)
-    DerivativeMaker().create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
+    create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
     assert len(os.listdir(PDF_DIR)) == 1
     assert os.path.isfile(os.path.join(PDF_DIR, "{}.pdf".format(identifier)))
 

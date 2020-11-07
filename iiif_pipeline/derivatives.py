@@ -1,5 +1,5 @@
 import math
-import mimetypes
+import magic
 import os
 import re
 import subprocess
@@ -10,13 +10,13 @@ from PIL.TiffTags import TAGS
 
 class DerivativeMaker:
 
-    def create_jp2(self, files, derivative_dir, uuid):
+    def create_jp2(self, files, derivative_dir, identifier):
         """Creates JPEG2000 files from TIFF files.
 
         Args:
             files (list): Filepaths for source files, which include source directory.
             derivative_dir (str): Path to directory location to save JP2 files.
-            uuid (str): A unique identifier to use for derivative image filenaming.
+            identifier (str): A unique identifier to use for derivative image filenaming.
         """
         default_options = ["-r 1.5",
                            "-c [256,256],[256,256],[128,128]",
@@ -24,16 +24,17 @@ class DerivativeMaker:
                            "-p RPCL"
                            ]
         for original_file in files:
-            derivative_file = self.make_filename(derivative_dir, original_file, uuid)
+            derivative_file = os.path.join(
+                derivative_dir, "{}_{}.jp2".format(identifier, original_file.split("_")[-1]))
             if os.path.isfile(derivative_file):
                 pass
                 # TODO: handle replace
             else:
                 if self.is_tiff(original_file):
                     try:
-                        resolutions = self.calculate_layers(original_file)
+                        layers = self.calculate_layers(original_file)
                         cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                            original_file, derivative_file, resolutions, ' '.join(default_options))
+                            original_file, derivative_file, layers, ' '.join(default_options))
                         result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                     except Exception as e:
                         raise Exception("Error creating JPEG2000: {}".format(e)) from e
@@ -54,21 +55,6 @@ class DerivativeMaker:
         except Exception as e:
             raise Exception("Error creating pdf: {}".format(e)) from e
 
-    def make_filename(self, end_directory, file, uuid):
-        """Make derivative filenames based on original filenames.
-
-        Args:
-            end_directory (str): the ending directory for derivative creation.
-            file (str): string representation of a filename.
-            uuid (str): unique identifier for the group of objects.
-        Returns:
-            derivative_file (str): concatenated string of end directory and file.
-        """
-        new_id = file.replace(file.split("_")[0], uuid)
-        fname = new_id.split(".")[0]
-        derivative_file = os.path.join(end_directory, "{}.jp2".format(fname))
-        return derivative_file
-
     def calculate_layers(self, file):
         """Calculates the number of layers based on pixel dimensions.
 
@@ -82,9 +68,7 @@ class DerivativeMaker:
         with Image.open(file) as img:
             width = [w for w in img.tag[256]][0]
             height = [h for h in img.tag[257]][0]
-        pixel_dimension = max(width, height)
-        layers = math.ceil((math.log(pixel_dimension) / math.log(2)) - ((math.log(96) / math.log(2)))) + 1
-        return layers
+        return math.ceil((math.log(max(width, height)) / math.log(2)) - ((math.log(96) / math.log(2)))) + 1
 
     def is_tiff(self, file):
         """Checks whether a file is a tiff.
@@ -94,5 +78,6 @@ class DerivativeMaker:
         Returns:
             boolean: True if tiff file, false otherwise.
         """
-        type = mimetypes.MimeTypes().guess_type(file)[0]
-        return True if type == "image/tiff" else False
+        # TODO: evaluate if we can use mimetypes library instead
+        content_type = magic.from_file(file, mime=True)
+        return True if content_type == "image/tiff" else False

@@ -20,7 +20,7 @@ mount /local_files/ on your local machine to /source_files in the running contai
 That will get you a bash command prompt, at which point you can execute the
 scripts, for example:
 
-    $ python iiif-pipeline.py /path/in/container
+    $ python iiif-pipeline.py /source_files
 
 
 ## Requirements

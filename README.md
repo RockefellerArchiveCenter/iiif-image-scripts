@@ -3,17 +3,22 @@ A pipeline to create image derivatives and IIIF Manifests.
 
 ## Quick start
 
-The Dockerfile included in this repository will allow you to run this library without installing dependencies locally.
+The Dockerfile included in this repository will allow you to run this library
+without installing dependencies locally.
 
-First, copy the example config file ([local_settings.cfg.example](local_settings.cfg.example)) and create a new file named `local_settings.cfg`. Then build the image:
+First, copy the example config file ([local_settings.cfg.example](local_settings.cfg.example))
+and create a new file named `local_settings.cfg`. Then build the image:
 
     $ docker build . -t iiif-pipeline
 
-Then run the container, mounting any local directories you need access to, and entering the container in interactive mode:
+Then run the container, mounting any local directories you need access to, and
+entering the container in interactive mode. For example, the command above will
+mount /local_files/ on your local machine to /source_files in the running container:
 
-    $ docker run -it -v /my/local/dir:/path/in/container iiif-pipeline /bin/bash
+    $ docker run -it -v /local_files:/source_files iiif-pipeline /bin/bash
 
-That will get you a bash command prompt, at which point you can execute the scripts, for example:
+That will get you a bash command prompt, at which point you can execute the
+scripts, for example:
 
     $ python iiif-pipeline.py /path/in/container
 
@@ -65,7 +70,8 @@ optional `--skip` flag will skip image files with filenames ending in `_001`.
 ## Configuration
 
 This script requires a `local_settings.cfg` file. For an example of the sections
-and keys required, see [local_settings.cfg.example](local_settings.cfg.example) in this repository
+and keys required, see [local_settings.cfg.example](local_settings.cfg.example)
+in this repository
 
 
 ## Tests

@@ -21,7 +21,7 @@ class IIIFPipeline:
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
 
         Args:
-            source_directory (str): Directory path to original source files.
+            source_directory (str): A directory containing subdirectories (named using ref ids) for archival objects
             skip (bool): Boolean that indicates whether the derivative creation script should skip
                 files ending with `_001`.
         """

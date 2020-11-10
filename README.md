@@ -5,11 +5,11 @@ A pipeline to create image derivatives and IIIF Manifests.
 
 The Dockerfile included in this repository will allow you to run this library without installing dependencies locally.
 
-First, build the image:
+First, copy the example config file ([local_settings.cfg.example](local_settings.cfg.example)) and create a new file named `local_settings.cfg`. Then build the image:
 
     $ docker build . -t iiif-pipeline
 
-Then, run the container, mounting any local directories you need access to, and entering the container in interactive mode:
+Then run the container, mounting any local directories you need access to, and entering the container in interactive mode:
 
     $ docker run -it -v /my/local/dir:/path/in/container iiif-pipeline /bin/bash
 

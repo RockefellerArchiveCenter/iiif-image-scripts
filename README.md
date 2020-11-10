@@ -36,13 +36,30 @@ It also requires these Python libraries in order to work correctly.
 
 ## Usage
 
+The IIIF Pipeline expects to be pointed at a directory containing subdirectories
+(named by ArchivesSpace ref ids) for archival object components, each of which
+contains a subdirectory named `master` containing original TIFF files:
+
+    source/
+      ⌙ c9c9d379257645debc1ceb48fea9cd52/
+        ⌙ master/
+          ⌙ c9c9d379257645debc1ceb48fea9cd52_001.tiff
+          ⌙ c9c9d379257645debc1ceb48fea9cd52_002.tiff
+          ⌙ c9c9d379257645debc1ceb48fea9cd52_003.tiff
+          ...
+      ⌙ bbfa5599325b444a9f182401b1f31fc5
+        ⌙ master/
+          ⌙ bbfa5599325b444a9f182401b1f31fc5_001.tiff
+          ⌙ bbfa5599325b444a9f182401b1f31fc5_002.tiff
+          ⌙ bbfa5599325b444a9f182401b1f31fc5_003.tiff
+
+
 This library is designed to be executed from the command line:
 
     $ iiif-pipeline.py source_directory [--skip SKIP]
 
-where `source_directory` is a path to a directory containing subdirectories of
-original TIFF files and the optional `--skip` flag will skip image files with
-filenames ending in `_001`.
+where `source_directory` is a path to the directory described above and the
+optional `--skip` flag will skip image files with filenames ending in `_001`.
 
 
 ## Configuration

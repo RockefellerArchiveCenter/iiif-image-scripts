@@ -1,12 +1,10 @@
 import math
 import magic
 import os
-import re
 import subprocess
 
 import img2pdf
 from PIL import Image
-from PIL.TiffTags import TAGS
 
 
 def calculate_layers(file):
@@ -69,7 +67,7 @@ def create_jp2(files, derivative_dir, identifier):
                     layers = calculate_layers(original_file)
                     cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
                         original_file, derivative_file, layers, ' '.join(default_options))
-                    result = subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                    subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                 except Exception as e:
                     raise Exception("Error creating JPEG2000: {}".format(e)) from e
             else:

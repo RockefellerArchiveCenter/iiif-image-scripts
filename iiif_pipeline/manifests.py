@@ -6,6 +6,7 @@ from PIL import Image
 THUMBNAIL_HEIGHT = 200
 THUMBNAIL_WIDTH = 200
 
+
 class ManifestMaker:
 
     def __init__(self, server_url, manifest_dir):
@@ -44,7 +45,6 @@ class ManifestMaker:
             canvas.thumbnail = self.set_thumbnail(page_ref)
             page_number += 1
         manifest.toFile(compact=False)
-        manifest_file = '{}{}.json'.format(self.manifest_dir, identifier)
 
     def get_image_info(self, image_dir, file):
         """Gets information about the image file.

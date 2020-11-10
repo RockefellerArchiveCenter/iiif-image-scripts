@@ -1,8 +1,4 @@
 import argparse
-import logging
-import os
-import shortuuid
-from configparser import ConfigParser
 
 from iiif_pipeline.pipeline import IIIFPipeline
 
@@ -13,6 +9,7 @@ def main():
     parser.add_argument("--skip", help="Skips files ending in `_001` during derivative creation.")
     args = parser.parse_args()
     IIIFPipeline().run(args.source_directory, args.skip)
+
 
 if __name__ == "__main__":
     main()

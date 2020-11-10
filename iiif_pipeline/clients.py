@@ -6,14 +6,15 @@ from asnake import utils
 from asnake.aspace import ASpace
 from botocore.exceptions import ClientError
 
+
 class ArchivesSpaceClient:
     def __init__(self, baseurl, username, password, repository):
-            self.client = ASpace(
-                baseurl=baseurl,
-                username=username,
-                password=password,
-                repository=repository).client
-            self.repository = repository
+        self.client = ASpace(
+            baseurl=baseurl,
+            username=username,
+            password=password,
+            repository=repository).client
+        self.repository = repository
 
     def get_object(self, ref_id):
         """Gets archival object title and date from an ArchivesSpace refid.

@@ -21,7 +21,7 @@ class IIIFPipeline:
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
 
         Args:
-            source_directory (str): A directory containing subdirectories (named using ref ids) for archival objects
+            source_dir (str): A directory containing subdirectories (named using ref ids) for archival objects
             skip (bool): Boolean that indicates whether the derivative creation script should skip
                 files ending with `_001`.
         """
@@ -43,13 +43,16 @@ class IIIFPipeline:
         for path in [jp2_dir, pdf_dir, manifest_dir]:
             if not os.path.exists(path):
                 os.makedirs(path)
-        directories = [d for d in os.listdir(source_dir) if (os.path.isdir(d) and d not in [jp2_dir, pdf_dir, manifest_dir])]
-        for directory in directories:
+        object_dirs = [d for d in os.listdir(source_dir) if (os.path.isdir(d) and d not in [jp2_dir, pdf_dir, manifest_dir])]
+        for directory in object_dirs:
             ref_id = directory.split('/')[-1]
             try:
+                obj_source_dir = os.path.join(directory, "master")
+                if not os.path.isdir(os.path.join(source_dir, obj_source_dir)):
+                    raise Exception("Object directory {} does not have a subdirectory named `master`".format(directory))
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
-                create_jp2(matching_files(directory, skip=skip, prepend=True), jp2_dir, identifier)
+                create_jp2(matching_files(obj_source_dir, skip=skip, prepend=True), jp2_dir, identifier)
                 logging.info("JPEG2000 derivatives created for {}".format(identifier))
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl"), manifest_dir).create_manifest(

@@ -7,20 +7,17 @@ The Dockerfile included in this repository will allow you to run this library
 without installing dependencies locally.
 
 First, copy the example config file ([local_settings.cfg.example](local_settings.cfg.example))
-and create a new file named `local_settings.cfg`. Then build the image:
+and create a new file named `local_settings.cfg`.
+
+Then build the image:
 
     $ docker build . -t iiif-pipeline
 
-Then run the container, mounting any local directories you need access to, and
-entering the container in interactive mode. For example, the command above will
-mount /local_files/ on your local machine to /source_files in the running container:
+You can then run the pipeline, mounting any local directories you need access to.
+For example, the command above will mount `/local_files/` on your local machine
+to `/source_files/` in the running container and then execute `iiif_pipeline.py`:
 
-    $ docker run -it -v /local_files:/source_files iiif-pipeline /bin/bash
-
-That will get you a bash command prompt, at which point you can execute the
-scripts, for example:
-
-    $ python iiif-pipeline.py /source_files
+    $ docker run -v /local_files:/source_files iiif-pipeline python /source_files
 
 
 ## Requirements

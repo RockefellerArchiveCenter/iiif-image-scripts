@@ -18,9 +18,11 @@ def setup():
     copy_sample_files(SOURCE_DIR, UUIDS, PAGE_COUNT, "tif", to_master=True)
 
 
+@patch("iiif_pipeline.clients.ArchivesSpaceClient.get_object")
 @patch("iiif_pipeline.clients.AWSClient.upload_files")
-def test_main(mock_aws_client):
+def test_pipeline(mock_aws_client, mock_get_object):
     expected_derivatives = len(UUIDS) * PAGE_COUNT
+    mock_get_object.return_value = {"title": random_string(), "dates": "1945-1950", "uri": random_string()}
     with archivesspace_vcr.use_cassette("get_ao.json"):
         IIIFPipeline().run(SOURCE_DIR, False)
         for subpath in ["images", "pdfs", "manifests"]:

@@ -12,8 +12,7 @@ from .helpers import matching_files, refid_dirs
 class IIIFPipeline:
     def __init__(self):
         logfile = 'iiif_generation.log'
-        logging.basicConfig(filename=logfile,
-                            level=logging.INFO)
+        logging.basicConfig(filename=logfile, level=logging.INFO)
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
 

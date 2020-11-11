@@ -44,7 +44,7 @@ class ArchivesSpaceClient:
         """
         title = data.get("title", data.get("display_string")).title()
         dates = ", ".join([utils.get_date_display(d, self.client) for d in data.get("dates", [])])
-        return {"title": title, "dates": dates}
+        return {"title": title, "dates": dates, "uri": data["uri"]}
 
 
 class AWSClient:

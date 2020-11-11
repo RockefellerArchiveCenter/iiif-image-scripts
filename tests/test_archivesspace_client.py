@@ -17,6 +17,7 @@ def test_run():
         assert isinstance(object, dict)
         assert "title" in object
         assert "dates" in object
+        assert "uri" in object
 
         with pytest.raises(Exception):
             ArchivesSpaceClient().get_object(missing_refid)

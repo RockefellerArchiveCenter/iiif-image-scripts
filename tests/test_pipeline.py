@@ -8,7 +8,7 @@ from helpers import archivesspace_vcr, copy_sample_files, random_string
 
 SOURCE_DIR = os.path.join("/", "source")
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")
-UUIDS = [random_string() for x in range(random.randint(1, 3))]
+UUIDS = [random_string() for x in range(random.randint(2, 3))]
 PAGE_COUNT = random.randint(1, 5)
 
 def setup():
@@ -22,7 +22,11 @@ def setup():
 @patch("iiif_pipeline.clients.AWSClient.upload_files")
 def test_pipeline(mock_aws_client, mock_get_object):
     expected_derivatives = len(UUIDS) * PAGE_COUNT
-    mock_get_object.return_value = {"title": random_string(), "dates": "1945-1950", "uri": random_string()}
+    # Mock.side_effect is used so that the random_string returned in the URI is unique each time the mock is called.
+    mock_get_object.side_effect = [
+        {"title": random_string(), "dates": "1945-1950", "uri": random_string()},
+        {"title": random_string(), "dates": "1950-1951", "uri": random_string()},
+        {"title": random_string(), "dates": "1945-1973", "uri": random_string()}]
     with archivesspace_vcr.use_cassette("get_ao.json"):
         IIIFPipeline().run(SOURCE_DIR, False)
         for subpath in ["images", "pdfs", "manifests"]:

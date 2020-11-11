@@ -60,10 +60,12 @@ class IIIFPipeline:
                 logging.info("IIIF Manifest created for {}".format(identifier))
                 create_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
                 logging.info("Concatenated PDF created for {}".format(identifier))
-                aws_client.upload_files(matching_files(jp2_dir, prefix=identifier, prepend=True), jp2_dir)
+                aws_client.upload_files(matching_files(jp2_dir, prefix=identifier, prepend=True), "images")
                 logging.info("JPEG2000 files uploaded for {}".format(identifier))
-                aws_client.upload_files(matching_files(pdf_dir, prefix=identifier, prepend=True), pdf_dir)
+                aws_client.upload_files(matching_files(pdf_dir, prefix=identifier, prepend=True), "pdfs")
                 logging.info("PDF file uploaded for {}".format(identifier))
+                aws_client.upload_files(matching_files(manifest_dir, prefix=identifier, prepend=True), "manifests")
+                logging.info("JSON Manifest file uploaded for {}".format(identifier))
                 # TODO: add cleanup function
             except Exception as e:
                 # TODO: add cleanup function

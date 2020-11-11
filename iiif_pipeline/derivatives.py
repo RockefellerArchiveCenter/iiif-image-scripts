@@ -57,7 +57,7 @@ def create_jp2(files, derivative_dir, identifier):
                        ]
     for original_file in files:
         derivative_file = os.path.join(
-            derivative_dir, "{}_{}.jp2".format(identifier, original_file.split("_")[-1]))
+            derivative_dir, "{}_{}.jp2".format(identifier, os.path.splitext(original_file)[0].split("_")[-1]))
         if os.path.isfile(derivative_file):
             pass
             # TODO: handle replace

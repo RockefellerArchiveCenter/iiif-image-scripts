@@ -94,4 +94,4 @@ class AWSClient:
             if e.response['Error']['Code'] == "404":
                 return False
             else:
-                raise Exception from e
+                raise Exception("Error connecting to AWS: {}".format(e)) from e

@@ -1,5 +1,5 @@
 from os import listdir
-from os.path import isfile, join
+from os.path import isdir, isfile, join
 
 
 def matching_files(directory, prefix=None, skip=False, prepend=False):
@@ -22,3 +22,13 @@ def matching_files(directory, prefix=None, skip=False, prepend=False):
             if file.split('.')[0].endswith('_001'):
                 files.remove(file)
     return [join(directory, f) for f in files] if prepend else files
+
+
+def refid_dirs(root_dir, reserved_dirs=[]):
+    """Get full paths for ref id directories.
+
+    Args:
+        root_dir (str): Path to the root directory to be traversed.
+        reserved_dirs (list): Paths of directories to be skipped.
+    """
+    return [join(root_dir, d) for d in listdir(root_dir) if (isdir(join(root_dir, d)) and join(root_dir, d) not in reserved_dirs)]

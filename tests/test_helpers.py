@@ -4,6 +4,7 @@ from iiif_pipeline.helpers import matching_files
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
 
+
 def test_matching_files():
     matching = matching_files(FIXTURE_FILEPATH)
     assert len(matching) == 1

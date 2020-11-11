@@ -1,156 +1,85 @@
-# iiif-image-scripts
-Repository for the RAC's iiif imaging scripts (derivative and manifest creation)
+# IIIF Pipeline
+A pipeline to create image derivatives and IIIF Manifests.
 
 ## Quick start
 
-The Dockerfile included in this repository will allow you to run these scripts without installing dependencies locally.
+The Dockerfile included in this repository will allow you to run this library
+without installing dependencies locally.
 
-First, build the image:
+First, copy the example config file ([local_settings.cfg.example](local_settings.cfg.example))
+and create a new file named `local_settings.cfg`.
 
-    $ docker build . -t iiif-scripts
+Then build the image:
 
-Then, run the container, mounting any local directories you need access to, and entering the container in interactive mode:
+    $ docker build . -t iiif-pipeline
 
-    $ docker run -it -v /my/local/dir:/path/in/container iiif-scripts /bin/bash
+You can then run the pipeline, mounting any local directories you need access to.
+For example, the command above will mount `/local_files/` on your local machine
+to `/source_files/` in the running container and then execute `iiif_pipeline.py`:
 
-That will get you a bash command prompt, at which point you can execute the scripts, for example:
+    $ docker run -v /local_files:/source_files iiif-pipeline python /source_files
 
-    $ python main.py /path/in/container
 
+## Requirements
 
-## `main.py`
+The entire suite has the following system dependencies:
+- Python 3 (tested on Python 3.6)
+- OpenJPEG
 
-Main wrapper script for running the four scripts together. Point it at a directory containing multiple other directories of tiff image files. Will create JP2 copies from those files, a manifest file, and upload JP2 files and manifests to an AWS bucket. Assumes each directory is an ArchivesSpace refid.
+It also requires these Python libraries in order to work correctly.
+- [ArchivesSnake](https://pypi.org/project/ArchivesSnake/)
+- [boto3](https://pypi.org/project/boto3/)
+- [iiif-prezi](https://pypi.org/project/iiif-prezi/)
+- [img2pdf](https://pypi.org/project/img2pdf/)
+- [Pillow](https://pypi.org/project/Pillow/)
+- [python-magic](https://pypi.org/project/python-magic/)
+- [shortuuid](https://pypi.org/project/shortuuid/)
 
-### Requires
 
-The entire suite requires these libraries to work correctly.
+## Usage
 
-- Python3
-- ArchivesSnake
-- Boto3
-- IIIF-Prezi
-- img2pdf
-- Pillow
-- Python Magic
-- Shortuuid
+The IIIF Pipeline expects to be pointed at a directory containing subdirectories
+(named by ArchivesSpace ref ids) for archival object components, each of which
+contains a subdirectory named `master` containing original TIFF files:
 
-It also requires OpenJPEG to be installed fully.
+    source/
+      ⌙ c9c9d379257645debc1ceb48fea9cd52/
+        ⌙ master/
+          ⌙ c9c9d379257645debc1ceb48fea9cd52_001.tiff
+          ⌙ c9c9d379257645debc1ceb48fea9cd52_002.tiff
+          ⌙ c9c9d379257645debc1ceb48fea9cd52_003.tiff
+          ...
+      ⌙ bbfa5599325b444a9f182401b1f31fc5
+        ⌙ master/
+          ⌙ bbfa5599325b444a9f182401b1f31fc5_001.tiff
+          ⌙ bbfa5599325b444a9f182401b1f31fc5_002.tiff
+          ⌙ bbfa5599325b444a9f182401b1f31fc5_003.tiff
 
-### Usage
 
-`python3 main.py /path/to/tif/files/`
+This library is designed to be executed from the command line:
 
-or
+    $ iiif-pipeline.py source_directory [--skip SKIP]
 
-`python3 main.py /path/to/tif/files/ --skip True` to skip image files ending in `_001`.
+where `source_directory` is a path to the directory described above and the
+optional `--skip` flag will skip image files with filenames ending in `_001`.
 
-Local usage skips these files sometimes because they are scanning targets, and not part of the object.
 
-### Logging
+## Configuration
 
-This script will make a log file named `iiif_generation.log` containing information about derivative creation, manifest creation, and AWS upload.
+This script requires a `local_settings.cfg` file. For an example of the sections
+and keys required, see [local_settings.cfg.example](local_settings.cfg.example)
+in this repository
 
-## `aws_upload.py`
 
-Uploads files to an AWS bucket. Currently uploads image files to an `/images/` folder and manifest files `/manifests/`.
+## Tests
 
-### Requires
+This library comes with unit tests. To quickly run tests, first build the image:
 
-This script requires the following libraries to function correctly.
+    $ docker build . -t iiif-pipeline
 
-- Boto3
-- Python Magic
+Then execute the tests:
 
-### Setup
+    $ docker run iiif-pipeline python -m pytest
 
-This script requires a `local_settings.cfg` file with the following sections and keys.
-
-- `[S3]`
-  - `bucketname` (the name of your S3 bucket)
-
-You will also either need to create sections/keys or set the following environment variables specific to your S3 bucket:
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-
-## `create_derivatives.py`
-
-This script reads through tif files in a directory and uses OpenJPEG to convert them to jp2 files.
-
-### Requires
-
-This script requires the following libraries to function correctly.
-
-- Pillow
-
-Additionally, this script requires the following to be installed on your system.
-- [OpenJPEG](https://github.com/uclouvain/openjpeg/blob/master/INSTALL.md)
-  - You may have to install the libtiff library on your system depending on your environment.
-
-
-### Default Settings
-
-The following default options for OpenJPEG have been set:
-
-- Compression ration of `1.5`
-- Precinct size: `[256,256]` for first two layers and then `[128,128]` for all others
-- Code block size of `[64,64]`
-- Progression order of `RPCL`
-
-## `create_manifest.py`
-
-Creates IIIF presentation manifests based on unique ArchivesSpace refids in an image directory. All files starting with the same identifier will be added to the manifest as image annotations.
-
-Uses the `IIIF-Prezi` manifest factory to make Presentation API 2.1-compliant manifest files.
-
-### Requires
-
-This script requires the following libraries to function correctly.
-
-  - IIIF-Prezi
-  - Pillow
-
-### Setup
-
-This script requires a `local_settings.cfg` file with the following sections and keys.
-
-- `[ImageServer]`
-  - `imageurl` (the url for your image server that will be included in the manifest)
-
-Update any hardcoded URLs to point to the proper image and manifest storage locations. You may have to update the following lines.
-
-  - `fac.set_base_prezi_uri("{}/manifests/".format(self.imageurl))`
-  - `fac.set_base_image_uri("{}/iiif/2/".format(self.imageurl))`
-  - `img = annotation.image("/{}/full/max/0/default.jpg".format(page_ref))`
-  - `section.thumbnail = fac.image(ident="/{}/square/200,/0/default.jpg".format(identifier))`
-
-## `get_ao.py`
-
-Checks if an archival object exists in ArchivesSpace using `find_by_id`, and if it does, returns the closest value of the object's title and date.
-
-### Requires
-
-This script requires the following libraries to function correctly.
-
-- ArchivesSnake
-
-### Setup
-
-This script requires a `local_settings.cfg` file with the following sections and keys.
-
-- `[ArchivesSpace]`
-  - [`baseurl`] (backend url for your ArchivesSpace instance)
-  - [`repository`] (ArchivesSpace repository ID)
-  - [`username`] (ArchivesSpace username)
-  - [`password`] (ArchivesSpace password)
-
-## `make_pdf.py`
-
-Merges files with matching identifiers into a single pdf.
-
-### Requires
-
-This script requires the following libraries to function correctly.
-
-- img2pdf
+When developing locally, you'll need to rebuild the image before you run tests
+in order for your changes to be reflected.

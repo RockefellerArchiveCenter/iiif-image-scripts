@@ -28,6 +28,8 @@ def test_create_jp2():
     """Ensure the run method produces the expected number of files."""
     create_jp2(matching_files(SOURCE_DIR, skip=False, prepend=True), DERIVATIVE_DIR, random.choice(UUIDS))
     assert len(os.listdir(DERIVATIVE_DIR)) == PAGE_COUNT
+    for f in os.listdir(DERIVATIVE_DIR):
+        assert ".tif" not in f
 
 
 def teardown():

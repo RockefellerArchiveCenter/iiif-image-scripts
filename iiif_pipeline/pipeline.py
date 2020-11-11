@@ -6,7 +6,7 @@ from configparser import ConfigParser
 from .clients import ArchivesSpaceClient, AWSClient
 from .derivatives import create_jp2, create_pdf
 from .manifests import ManifestMaker
-from .helpers import matching_files
+from .helpers import matching_files, refid_dirs
 
 
 class IIIFPipeline:
@@ -43,7 +43,7 @@ class IIIFPipeline:
         for path in [jp2_dir, pdf_dir, manifest_dir]:
             if not os.path.exists(path):
                 os.makedirs(path)
-        object_dirs = [d for d in os.listdir(source_dir) if (os.path.isdir(d) and d not in [jp2_dir, pdf_dir, manifest_dir])]
+        object_dirs = refid_dirs(source_dir, [jp2_dir, pdf_dir, manifest_dir])
         for directory in object_dirs:
             ref_id = directory.split('/')[-1]
             try:
@@ -67,5 +67,6 @@ class IIIFPipeline:
                 # TODO: add cleanup function
             except Exception as e:
                 # TODO: add cleanup function
+                print(e)
                 logging.error(e)
                 pass

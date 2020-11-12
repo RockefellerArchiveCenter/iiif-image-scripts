@@ -3,6 +3,8 @@ services:
   - docker
 before_install:
   - cp local_settings.cfg.example local_settings.cfg
+install:
+  - pip install tox==3.20.1
 script:
   - tox
 notifications:

@@ -17,7 +17,7 @@ You can then run the pipeline, mounting any local directories you need access to
 For example, the command above will mount `/local_files/` on your local machine
 to `/source_files/` in the running container and then execute `iiif_pipeline.py`:
 
-    $ docker run -v /local_files:/source_files iiif-pipeline python /source_files
+    $ docker run -v /local_files:/source_files iiif-pipeline python iiif-pipeline.py /source_files
 
 
 ## Requirements

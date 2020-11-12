@@ -19,7 +19,8 @@ class ManifestMaker:
         self.fac.set_base_image_uri(self.resource_url)
         self.fac.set_debug("error")
 
-    def create_manifest(self, files, image_dir, identifier, obj_data):
+    def create_manifest(self, files, image_dir, identifier,
+                        obj_data, replace=False):
         """Method that runs the other methods to build a manifest file and populate
         it with information.
 
@@ -28,7 +29,13 @@ class ManifestMaker:
             image_dir (str): Path to directory containing derivative image files.
             identifier (str): A unique identifier.
             obj_data (dict): Data about the archival object.
+            replace (bool): Replace existing files.
         """
+        manifest_path = "{}.json".format(
+            os.path.join(self.manifest_dir, identifier))
+        if (os.path.isfile(manifest_path) and not replace):
+            raise FileExistsError(
+                "Error creating manifest: {} already exists".format(manifest_path))
         page_number = 1
         manifest = self.fac.manifest(ident=identifier, label=obj_data["title"])
         manifest.set_metadata({"Date": obj_data["dates"]})

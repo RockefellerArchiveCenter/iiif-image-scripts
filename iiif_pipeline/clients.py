@@ -58,18 +58,20 @@ class AWSClient:
             aws_secret_access_key=secret_key)
         self.bucket = bucket
 
-    def upload_files(self, files, destination_dir):
+    def upload_files(self, files, destination_dir, replace=False):
         """Iterates over directories and conditionally uploads files to S3.
 
         Args:
             files (list): Filepaths to be uploaded.
-            destination_dir: Path in the bucket in which the file should be stored.
+            destination_dir (str): Path in the bucket in which the file should be stored.
+            replace (bool): Upload files even if they exist.
         """
         for file in files:
             key = os.path.splitext(os.path.basename(file))[0]
-            if self.object_in_bucket(destination_dir, key):
-                # TODO: provide replace handling
-                pass
+            bucket_path = os.path.join(destination_dir, key)
+            if (self.object_in_bucket(bucket_path) and not replace):
+                raise FileExistsError(
+                    "Error uploading files to AWS: {} already exists in {}".format(bucket_path, self.bucket))
             else:
                 if file.endswith(".json"):
                     content_type = "application/json"
@@ -78,7 +80,7 @@ class AWSClient:
                     # mimetypes will work?
                     content_type = magic.from_file(file, mime=True)
                 self.s3.meta.client.upload_file(
-                    file, self.bucket, os.path.join(destination_dir, key),
+                    file, self.bucket, bucket_path,
                     ExtraArgs={'ContentType': content_type})
 
     def object_in_bucket(self, destination_dir, key):

@@ -11,9 +11,14 @@ def main():
         help="A directory containing subdirectories (named using ref ids) for archival objects.")
     parser.add_argument(
         "--skip",
-        help="Skips files ending in `_001` during derivative creation.")
+        action="store_true",
+        help="Skip files ending in `_001` during derivative creation.")
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Replace existing files.")
     args = parser.parse_args()
-    IIIFPipeline().run(args.source_directory, args.skip)
+    IIIFPipeline().run(args.source_directory, args.skip, args.replace)
 
 
 if __name__ == "__main__":

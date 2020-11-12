@@ -27,13 +27,11 @@ def setup():
 def test_create_pdf():
     """Ensure the run method produces the expected number of files."""
     identifier = random.choice(UUIDS)
-    create_pdf(
-        matching_files(
-            DERIVATIVE_DIR,
-            prefix=identifier,
-            prepend=True),
-        identifier,
-        PDF_DIR)
+    jp2_files = matching_files(
+        DERIVATIVE_DIR,
+        prefix=identifier,
+        prepend=True)
+    create_pdf(jp2_files, identifier, PDF_DIR)
     assert len(os.listdir(PDF_DIR)) == 1
     assert os.path.isfile(os.path.join(PDF_DIR, "{}.pdf".format(identifier)))
 
@@ -45,29 +43,14 @@ def test_replace_pdf():
     be raised.
     """
     identifier = random.choice(UUIDS)
-    create_pdf(
-        matching_files(
-            DERIVATIVE_DIR,
-            prefix=identifier,
-            prepend=True),
-        identifier,
-        PDF_DIR)
+    jp2_files = matching_files(
+        DERIVATIVE_DIR,
+        prefix=identifier,
+        prepend=True)
+    create_pdf(jp2_files, identifier, PDF_DIR)
     with pytest.raises(FileExistsError):
-        create_pdf(
-            matching_files(
-                DERIVATIVE_DIR,
-                prefix=identifier,
-                prepend=True),
-            identifier,
-            PDF_DIR)
-    create_pdf(
-        matching_files(
-            DERIVATIVE_DIR,
-            prefix=identifier,
-            prepend=True),
-        identifier,
-        PDF_DIR,
-        replace=True)
+        create_pdf(jp2_files, identifier, PDF_DIR)
+    create_pdf(jp2_files, identifier, PDF_DIR, replace=True)
 
 
 def teardown():

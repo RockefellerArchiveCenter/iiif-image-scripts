@@ -37,7 +37,7 @@ def is_tiff(file):
     return True if content_type == "image/tiff" else False
 
 
-def create_jp2(files, derivative_dir, identifier, replace=False):
+def create_jp2(files, identifier, derivative_dir, replace=False):
     """Creates JPEG2000 files from TIFF files.
 
     The default options for conversion below are:

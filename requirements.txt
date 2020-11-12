@@ -6,4 +6,5 @@ Pillow==8.0.1
 pytest==4.3.0
 python-magic==0.4.18
 shortuuid==1.0.1
+tox==3.20.1
 vcrpy==4.1.0

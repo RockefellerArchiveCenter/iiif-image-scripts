@@ -1,5 +1,4 @@
 import pytest
-
 from helpers import archivesspace_vcr, get_config
 from iiif_pipeline.clients import ArchivesSpaceClient
 

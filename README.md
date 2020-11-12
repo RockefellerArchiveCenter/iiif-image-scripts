@@ -73,13 +73,5 @@ in this repository
 
 ## Tests
 
-This library comes with unit tests. To quickly run tests, first build the image:
-
-    $ docker build . -t iiif-pipeline
-
-Then execute the tests:
-
-    $ docker run iiif-pipeline python -m pytest
-
-When developing locally, you'll need to rebuild the image before you run tests
-in order for your changes to be reflected.
+This library comes with unit tests. To quickly run tests, along with linters,
+run `tox` from the root of the project.

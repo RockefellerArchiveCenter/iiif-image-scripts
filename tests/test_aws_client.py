@@ -1,12 +1,10 @@
 import os
-import shutil
 import random
+import shutil
 
 from botocore.stub import Stubber
-
 from helpers import copy_sample_files, get_config, random_string
 from iiif_pipeline.clients import AWSClient
-
 
 MANIFEST_FIXTURES = os.path.join("fixtures", "manifests")
 MANIFEST_DIR = os.path.join("/", "manifests")
@@ -34,13 +32,22 @@ def test_object_in_bucket():
         config.get("S3", "aws_access_key_id"),
         config.get("S3", "aws_secret_access_key"),
         config.get("S3", "bucketname"))
-    expected_params = {"Bucket": config.get("S3", "bucketname"), "Key": os.path.join(DERIVATIVE_DIR, key)}
+    expected_params = {
+        "Bucket": config.get(
+            "S3", "bucketname"), "Key": os.path.join(
+            DERIVATIVE_DIR, key)}
     with Stubber(aws.s3.meta.client) as stubber:
-        stubber.add_response("head_object", service_response={}, expected_params=expected_params)
+        stubber.add_response(
+            "head_object",
+            service_response={},
+            expected_params=expected_params)
         found = aws.object_in_bucket(DERIVATIVE_DIR, key)
         assert found
 
-        stubber.add_client_error("head_object", service_error_code='404', expected_params=expected_params)
+        stubber.add_client_error(
+            "head_object",
+            service_error_code='404',
+            expected_params=expected_params)
         not_found = aws.object_in_bucket(DERIVATIVE_DIR, key)
         assert not not_found
 

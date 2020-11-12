@@ -6,7 +6,6 @@ from helpers import copy_sample_files, random_string
 from iiif_pipeline.derivatives import create_jp2
 from iiif_pipeline.helpers import matching_files
 
-
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")
 SOURCE_DIR = os.path.join("/", "source")
 DERIVATIVE_DIR = os.path.join("/", "derivatives")
@@ -26,7 +25,13 @@ def setup():
 
 def test_create_jp2():
     """Ensure the run method produces the expected number of files."""
-    create_jp2(matching_files(SOURCE_DIR, skip=False, prepend=True), DERIVATIVE_DIR, random.choice(UUIDS))
+    create_jp2(
+        matching_files(
+            SOURCE_DIR,
+            skip=False,
+            prepend=True),
+        DERIVATIVE_DIR,
+        random.choice(UUIDS))
     assert len(os.listdir(DERIVATIVE_DIR)) == PAGE_COUNT
     for f in os.listdir(DERIVATIVE_DIR):
         assert ".tif" not in f

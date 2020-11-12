@@ -1,9 +1,9 @@
 import math
-import magic
 import os
 import subprocess
 
 import img2pdf
+import magic
 from PIL import Image
 
 
@@ -20,7 +20,8 @@ def calculate_layers(file):
     with Image.open(file) as img:
         width = [w for w in img.tag[256]][0]
         height = [h for h in img.tag[257]][0]
-    return math.ceil((math.log(max(width, height)) / math.log(2)) - ((math.log(96) / math.log(2)))) + 1
+    return math.ceil((math.log(max(width, height)) / math.log(2)
+                      ) - ((math.log(96) / math.log(2)))) + 1
 
 
 def is_tiff(file):
@@ -67,11 +68,14 @@ def create_jp2(files, derivative_dir, identifier):
                     layers = calculate_layers(original_file)
                     cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
                         original_file, derivative_file, layers, ' '.join(default_options))
-                    subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                    subprocess.check_output(
+                        [cmd], stderr=subprocess.STDOUT, shell=True)
                 except Exception as e:
-                    raise Exception("Error creating JPEG2000: {}".format(e)) from e
+                    raise Exception(
+                        "Error creating JPEG2000: {}".format(e)) from e
             else:
-                raise Exception("Error creating JPEG2000: {} is not a valid TIFF".format(original_file))
+                raise Exception(
+                    "Error creating JPEG2000: {} is not a valid TIFF".format(original_file))
 
 
 def create_pdf(files, identifier, pdf_dir):

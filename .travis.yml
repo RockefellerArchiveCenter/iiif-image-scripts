@@ -1,11 +1,16 @@
 language: python
 services:
-- docker
-before_install:
-  - cp local_settings.cfg.example local_settings.cfg
+  - docker
 install:
-  - docker build . -t iiif-pipeline
-script:
-- docker run -it iiif-pipeline python -m pytest
+  - cp local_settings.cfg.example local_settings.cfg
+before_script:
+  - pip install tox
+script: tox
+matrix:
+  include:
+    - python: "3.7"
+      env: TOXENV=py37
+    - python: "3.7"
+      env: TOXENV=linting
 notifications:
   email: false

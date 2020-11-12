@@ -58,10 +58,11 @@ contains a subdirectory named `master` containing original TIFF files:
 
 This library is designed to be executed from the command line:
 
-    $ iiif-pipeline.py source_directory [--skip SKIP]
+    $ iiif-pipeline.py source_directory [--skip] [--replace]
 
-where `source_directory` is a path to the directory described above and the
-optional `--skip` flag will skip image files with filenames ending in `_001`.
+where `source_directory` is a path to the directory described, the
+optional `--skip` flag will skip image files with filenames ending in `_001`,
+and the optional `--replace` flag will replace existing files.
 
 
 ## Configuration

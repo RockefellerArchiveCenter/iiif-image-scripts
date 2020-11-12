@@ -31,7 +31,7 @@ def test_pipeline(mock_aws_client, mock_get_object):
         {"title": random_string(), "dates": "1950-1951", "uri": random_string()},
         {"title": random_string(), "dates": "1945-1973", "uri": random_string()}]
     with archivesspace_vcr.use_cassette("get_ao.json"):
-        IIIFPipeline().run(SOURCE_DIR, False)
+        IIIFPipeline().run(SOURCE_DIR, False, False)
         for subpath in ["images", "pdfs", "manifests"]:
             assert os.path.isdir(os.path.join(SOURCE_DIR, subpath))
             assert len(os.listdir(os.path.join(SOURCE_DIR, subpath))) == 0
@@ -49,7 +49,7 @@ def test_pipeline_exception(mock_aws_client, mock_get_object, caplog):
     mock_get_object.return_value = {"title": random_string(), "dates": "1945-1950", "uri": random_string()}
     mock_aws_client.side_effect = Exception(exception_text)
     with archivesspace_vcr.use_cassette("get_ao.json"):
-        IIIFPipeline().run(SOURCE_DIR, False)
+        IIIFPipeline().run(SOURCE_DIR, False, False)
         assert len(caplog.records) == len(UUIDS)
         for log in caplog.records:
             assert log.getMessage() == exception_text

@@ -36,7 +36,7 @@ def is_tiff(file):
     return True if content_type == "image/tiff" else False
 
 
-def create_jp2(files, derivative_dir, identifier):
+def create_jp2(files, derivative_dir, identifier, replace=False):
     """Creates JPEG2000 files from TIFF files.
 
     The default options for conversion below are:
@@ -49,6 +49,7 @@ def create_jp2(files, derivative_dir, identifier):
         files (list): Filepaths for source files, which include source directory.
         derivative_dir (str): Path to directory location to save JP2 files.
         identifier (str): A unique identifier to use for derivative image filenaming.
+        replace (bool): Replace existing derivative files.
     """
     default_options = ["-r 1.5",
                        "-c [256,256],[256,256],[128,128]",
@@ -56,17 +57,16 @@ def create_jp2(files, derivative_dir, identifier):
                        "-p RPCL"
                        ]
     for original_file in files:
-        derivative_file = os.path.join(
+        derivative_path = os.path.join(
             derivative_dir, "{}_{}.jp2".format(identifier, os.path.splitext(original_file)[0].split("_")[-1]))
-        if os.path.isfile(derivative_file):
-            pass
-            # TODO: handle replace
+        if (os.path.isfile(derivative_path) and not replace):
+            raise FileExistsError("Error creating JPEG2000: {} already exists".format(derivative_path))
         else:
             if is_tiff(original_file):
                 try:
                     layers = calculate_layers(original_file)
                     cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
-                        original_file, derivative_file, layers, ' '.join(default_options))
+                        original_file, derivative_path, layers, ' '.join(default_options))
                     subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
                 except Exception as e:
                     raise Exception("Error creating JPEG2000: {}".format(e)) from e
@@ -74,16 +74,20 @@ def create_jp2(files, derivative_dir, identifier):
                 raise Exception("Error creating JPEG2000: {} is not a valid TIFF".format(original_file))
 
 
-def create_pdf(files, identifier, pdf_dir):
+def create_pdf(files, identifier, pdf_dir, replace=False):
     """Creates concatenated PDFS from JPEG2000 files.
 
     Args:
         files (list): Filepaths of JPEG2000 files.
         identifier (str): Identifier of created PDF file.
         pdf_dir (str): Directory in which to save the PDF file.
+        replace (bool): Replace existing derivative files.
     """
+    pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
+    if (os.path.isfile(pdf_path) and not replace):
+        raise FileExistsError("Error creating PDF: {} already exists".format(pdf_path))
     try:
-        with open("{}.pdf".format(os.path.join(pdf_dir, identifier)), "wb") as f:
+        with open(pdf_path, "wb") as f:
             f.write(img2pdf.convert(files))
     except Exception as e:
-        raise Exception("Error creating pdf: {}".format(e)) from e
+        raise Exception("Error creating PDF: {}".format(e)) from e

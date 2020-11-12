@@ -1,4 +1,5 @@
 import os
+import pytest
 import random
 import shutil
 
@@ -29,6 +30,19 @@ def test_create_pdf():
     create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
     assert len(os.listdir(PDF_DIR)) == 1
     assert os.path.isfile(os.path.join(PDF_DIR, "{}.pdf".format(identifier)))
+
+
+def test_replace_pdf():
+    """Ensure replacing of files is handled correctly.
+
+    If files exist and the replace parameter is False, a FileExistsError should
+    be raised.
+    """
+    identifier = random.choice(UUIDS)
+    create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
+    with pytest.raises(FileExistsError):
+        create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
+    create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR, replace=True)
 
 
 def teardown():

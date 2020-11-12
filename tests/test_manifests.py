@@ -1,4 +1,5 @@
 import os
+import pytest
 import random
 import shutil
 
@@ -33,6 +34,28 @@ def test_create_manifest():
         {"title": random_string(), "dates": random_string()})
     assert len(os.listdir(MANIFEST_DIR)) == 1
     assert os.path.isfile(os.path.join(MANIFEST_DIR, "{}.json".format(uuid)))
+
+
+def test_replace_manifest():
+    """Ensure replacing of files is handled correctly.
+
+    If files exist and the replace parameter is False, a FileExistsError should
+    be raised.
+    """
+    uuid = random.choice(UUIDS)
+    ManifestMaker("http://example.com", MANIFEST_DIR).create_manifest(
+        matching_files(DERIVATIVE_DIR, prefix=uuid),
+        DERIVATIVE_DIR, uuid,
+        {"title": random_string(), "dates": random_string()})
+    with pytest.raises(FileExistsError):
+        ManifestMaker("http://example.com", MANIFEST_DIR).create_manifest(
+            matching_files(DERIVATIVE_DIR, prefix=uuid),
+            DERIVATIVE_DIR, uuid,
+            {"title": random_string(), "dates": random_string()})
+    ManifestMaker("http://example.com", MANIFEST_DIR).create_manifest(
+        matching_files(DERIVATIVE_DIR, prefix=uuid),
+        DERIVATIVE_DIR, uuid,
+        {"title": random_string(), "dates": random_string()}, replace=True)
 
 
 def teardown():

@@ -16,13 +16,13 @@ class IIIFPipeline:
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
 
-    def run(self, source_dir, skip):
+    def run(self, source_dir, skip, replace):
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
 
         Args:
-            source_dir (str): A directory containing subdirectories (named using ref ids) for archival objects
-            skip (bool): Boolean that indicates whether the derivative creation script should skip
-                files ending with `_001`.
+            source_dir (str): A directory containing subdirectories (named using ref ids) for archival objects.
+            skip (bool): Flag to should skip files ending with `_001`.
+            replace (bool): Flag to replace existing files.
         """
         if not os.path.isdir(source_dir):
             raise Exception("{} is not a path to a directory.".format(source_dir))
@@ -52,19 +52,19 @@ class IIIFPipeline:
                     raise Exception("Object directory {} does not have a subdirectory named `master`".format(directory))
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
-                create_jp2(matching_files(obj_source_dir, skip=skip, prepend=True), jp2_dir, identifier)
+                create_jp2(matching_files(obj_source_dir, skip=skip, prepend=True), jp2_dir, identifier, replace)
                 logging.info("JPEG2000 derivatives created for {}".format(identifier))
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl"), manifest_dir).create_manifest(
-                        matching_files(jp2_dir, prefix=identifier), jp2_dir, identifier, obj_data)
+                        matching_files(jp2_dir, prefix=identifier), jp2_dir, identifier, obj_data, replace)
                 logging.info("IIIF Manifest created for {}".format(identifier))
-                create_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
+                create_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir, replace)
                 logging.info("Concatenated PDF created for {}".format(identifier))
                 for src_dir, target_dir, file_type in [
                         (jp2_dir, "images", "JPEG2000 files"),
                         (pdf_dir, "pdfs", "PDF file"),
                         (manifest_dir, "manifests", "Manifest file")]:
-                    aws_client.upload_files(matching_files(src_dir, prefix=identifier, prepend=True), target_dir)
+                    aws_client.upload_files(matching_files(src_dir, prefix=identifier, prepend=True), target_dir, replace)
                     logging.info("{} uploaded for {}".format(file_type, identifier))
                 cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
             except Exception as e:

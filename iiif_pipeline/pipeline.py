@@ -6,7 +6,7 @@ from configparser import ConfigParser
 from .clients import ArchivesSpaceClient, AWSClient
 from .derivatives import create_jp2, create_pdf
 from .manifests import ManifestMaker
-from .helpers import matching_files, refid_dirs
+from .helpers import cleanup_files, matching_files, refid_dirs
 
 
 class IIIFPipeline:
@@ -44,6 +44,7 @@ class IIIFPipeline:
                 os.makedirs(path)
         object_dirs = refid_dirs(source_dir, [jp2_dir, pdf_dir, manifest_dir])
         for directory in object_dirs:
+            identifier = None
             ref_id = directory.split('/')[-1]
             try:
                 obj_source_dir = os.path.join(directory, "master")
@@ -65,9 +66,10 @@ class IIIFPipeline:
                 logging.info("PDF file uploaded for {}".format(identifier))
                 aws_client.upload_files(matching_files(manifest_dir, prefix=identifier, prepend=True), "manifests")
                 logging.info("JSON Manifest file uploaded for {}".format(identifier))
-                # TODO: add cleanup function
+                cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
             except Exception as e:
-                # TODO: add cleanup function
                 print(e)
+                if identifier:
+                    cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
                 logging.error(e)
                 pass

@@ -21,7 +21,6 @@ def setup():
 @patch("iiif_pipeline.clients.ArchivesSpaceClient.get_object")
 @patch("iiif_pipeline.clients.AWSClient.upload_files")
 def test_pipeline(mock_aws_client, mock_get_object):
-    expected_derivatives = len(UUIDS) * PAGE_COUNT
     # Mock.side_effect is used so that the random_string returned in the URI is unique each time the mock is called.
     mock_get_object.side_effect = [
         {"title": random_string(), "dates": "1945-1950", "uri": random_string()},
@@ -31,9 +30,7 @@ def test_pipeline(mock_aws_client, mock_get_object):
         IIIFPipeline().run(SOURCE_DIR, False)
         for subpath in ["images", "pdfs", "manifests"]:
             assert os.path.isdir(os.path.join(SOURCE_DIR, subpath))
-        assert len(os.listdir(os.path.join(SOURCE_DIR, "images"))) == expected_derivatives
-        for subpath in ["pdfs", "manifests"]:
-            assert len(os.listdir(os.path.join(SOURCE_DIR, subpath))) == len(UUIDS)
+            assert len(os.listdir(os.path.join(SOURCE_DIR, subpath))) == 0
 
 
 def teardown():

@@ -1,10 +1,9 @@
 import os
-import shutil
 import random
+import shutil
 
-from iiif_pipeline.helpers import cleanup_files, matching_files, refid_dirs
 from helpers import copy_sample_files, random_string
-
+from iiif_pipeline.helpers import cleanup_files, matching_files, refid_dirs
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
 SOURCE_DIR = os.path.join("/", "source")
@@ -36,7 +35,6 @@ def test_matching_files():
 
 def test_refid_dirs():
     """Ensure the correct number of directories are returned."""
-    print(os.listdir(SOURCE_DIR))
     dirs = refid_dirs(SOURCE_DIR)
     assert len(dirs) == len(UUIDS)
 

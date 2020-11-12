@@ -14,7 +14,8 @@ def matching_files(directory, prefix=None, skip=False, prepend=False):
     Returns:
         files (lst): a list of files that matched the identifier.
     """
-    files = sorted([f for f in listdir(directory) if (isfile(join(directory, f)) and not f.startswith("."))])
+    files = sorted([f for f in listdir(directory) if (
+        isfile(join(directory, f)) and not f.startswith("."))])
     if prefix:
         files = sorted([f for f in files if f.startswith(prefix)])
     if skip:
@@ -31,7 +32,8 @@ def refid_dirs(root_dir, reserved_dirs=[]):
         root_dir (str): Path to the root directory to be traversed.
         reserved_dirs (list): Paths of directories to be skipped.
     """
-    return [join(root_dir, d) for d in listdir(root_dir) if (isdir(join(root_dir, d)) and join(root_dir, d) not in reserved_dirs)]
+    return [join(root_dir, d) for d in listdir(root_dir) if (
+        isdir(join(root_dir, d)) and join(root_dir, d) not in reserved_dirs)]
 
 
 def cleanup_files(identifier, directories):

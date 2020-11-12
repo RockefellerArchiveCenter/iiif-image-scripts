@@ -2,9 +2,9 @@ import os
 import random
 import shutil
 import string
-import vcr
 from configparser import ConfigParser
 
+import vcr
 
 archivesspace_vcr = vcr.VCR(
     serializer='json',
@@ -16,7 +16,8 @@ archivesspace_vcr = vcr.VCR(
 )
 
 
-def copy_sample_files(directory, identifiers, page_count, suffix, to_master=False):
+def copy_sample_files(directory, identifiers, page_count,
+                      suffix, to_master=False):
     """Duplicates a sample file.
 
     Args:
@@ -28,10 +29,15 @@ def copy_sample_files(directory, identifiers, page_count, suffix, to_master=Fals
     for f in os.listdir(directory):
         for ident in identifiers:
             for page in range(page_count):
-                target = os.path.join(directory, "{}_{}.{}".format(ident, page, suffix))
+                target = os.path.join(
+                    directory, "{}_{}.{}".format(
+                        ident, page, suffix))
                 if to_master:
-                    target = os.path.join(directory, ident, "master", "{}_{}.{}".format(ident, page, suffix))
-                    if not os.path.isdir(os.path.join(directory, ident, "master")):
+                    target = os.path.join(
+                        directory, ident, "master", "{}_{}.{}".format(
+                            ident, page, suffix))
+                    if not os.path.isdir(os.path.join(
+                            directory, ident, "master")):
                         os.makedirs(os.path.join(directory, ident, "master"))
                 shutil.copyfile(
                     os.path.join(directory, f),

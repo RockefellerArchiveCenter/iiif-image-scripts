@@ -6,7 +6,7 @@ from configparser import ConfigParser
 from .clients import ArchivesSpaceClient, AWSClient
 from .derivatives import create_jp2, create_pdf
 from .manifests import ManifestMaker
-from .helpers import matching_files, refid_dirs
+from .helpers import cleanup_files, matching_files, refid_dirs
 
 
 class IIIFPipeline:
@@ -44,6 +44,7 @@ class IIIFPipeline:
                 os.makedirs(path)
         object_dirs = refid_dirs(source_dir, [jp2_dir, pdf_dir, manifest_dir])
         for directory in object_dirs:
+            identifier = None
             ref_id = directory.split('/')[-1]
             try:
                 obj_source_dir = os.path.join(directory, "master")
@@ -59,15 +60,16 @@ class IIIFPipeline:
                 logging.info("IIIF Manifest created for {}".format(identifier))
                 create_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir)
                 logging.info("Concatenated PDF created for {}".format(identifier))
-                aws_client.upload_files(matching_files(jp2_dir, prefix=identifier, prepend=True), "images")
-                logging.info("JPEG2000 files uploaded for {}".format(identifier))
-                aws_client.upload_files(matching_files(pdf_dir, prefix=identifier, prepend=True), "pdfs")
-                logging.info("PDF file uploaded for {}".format(identifier))
-                aws_client.upload_files(matching_files(manifest_dir, prefix=identifier, prepend=True), "manifests")
-                logging.info("JSON Manifest file uploaded for {}".format(identifier))
-                # TODO: add cleanup function
+                for src_dir, target_dir, file_type in [
+                        (jp2_dir, "images", "JPEG2000 files"),
+                        (pdf_dir, "pdfs", "PDF file"),
+                        (manifest_dir, "manifests", "Manifest file")]:
+                    aws_client.upload_files(matching_files(src_dir, prefix=identifier, prepend=True), target_dir)
+                    logging.info("{} uploaded for {}".format(file_type, identifier))
+                cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
             except Exception as e:
-                # TODO: add cleanup function
                 print(e)
+                if identifier:
+                    cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
                 logging.error(e)
                 pass

@@ -1,4 +1,4 @@
-from os import listdir
+from os import listdir, remove
 from os.path import isdir, isfile, join
 
 
@@ -32,3 +32,15 @@ def refid_dirs(root_dir, reserved_dirs=[]):
         reserved_dirs (list): Paths of directories to be skipped.
     """
     return [join(root_dir, d) for d in listdir(root_dir) if (isdir(join(root_dir, d)) and join(root_dir, d) not in reserved_dirs)]
+
+
+def cleanup_files(identifier, directories):
+    """Removes files which start with an identifier from a list of directories.
+
+    Args:
+        identifier (str): Identifier which prefixes the files to be removed.
+        reserved_dirs (list): Paths of directories to be cleaned.
+    """
+    for directory in directories:
+        for f in matching_files(directory, prefix=identifier, prepend=True):
+            remove(f)

@@ -7,7 +7,6 @@ from helpers import copy_sample_files, random_string
 from iiif_pipeline.derivatives import create_jp2
 from iiif_pipeline.helpers import matching_files
 
-
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")
 SOURCE_DIR = os.path.join("/", "source")
 DERIVATIVE_DIR = os.path.join("/", "derivatives")

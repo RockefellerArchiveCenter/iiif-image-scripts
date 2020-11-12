@@ -41,10 +41,14 @@ class ManifestMaker:
         for file in files:
             page_ref = os.path.splitext(file)[0]
             width, height = self.get_image_info(image_dir, file)
-            canvas = sequence.canvas(ident=page_ref, label="Page {}".format(str(page_number)))
+            canvas = sequence.canvas(
+                ident=page_ref,
+                label="Page {}".format(
+                    str(page_number)))
             canvas.set_hw(height, width)
             annotation = canvas.annotation(ident=page_ref)
-            img = annotation.image(ident="{}/full/max/0/default.jpg".format(page_ref))
+            img = annotation.image(
+                ident="{}/full/max/0/default.jpg".format(page_ref))
             self.set_image_data(img, height, width, page_ref)
             canvas.thumbnail = self.set_thumbnail(page_ref)
             page_number += 1
@@ -90,8 +94,13 @@ class ManifestMaker:
         Returns:
             thumbnail (object): An iiif_prezi Image object.
         """
-        thumbnail = self.fac.image(ident="{}/square/{},/0/default.jpg".format(identifier, THUMBNAIL_WIDTH))
-        self.set_image_data(thumbnail, THUMBNAIL_HEIGHT, THUMBNAIL_WIDTH, identifier)
+        thumbnail = self.fac.image(
+            ident="{}/square/{},/0/default.jpg".format(identifier, THUMBNAIL_WIDTH))
+        self.set_image_data(
+            thumbnail,
+            THUMBNAIL_HEIGHT,
+            THUMBNAIL_WIDTH,
+            identifier)
         return thumbnail
 
     def set_service(self, identifier):

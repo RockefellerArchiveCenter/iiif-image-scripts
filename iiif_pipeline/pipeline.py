@@ -1,12 +1,13 @@
 import logging
 import os
-import shortuuid
 from configparser import ConfigParser
+
+import shortuuid
 
 from .clients import ArchivesSpaceClient, AWSClient
 from .derivatives import create_jp2, create_pdf
-from .manifests import ManifestMaker
 from .helpers import cleanup_files, matching_files, refid_dirs
+from .manifests import ManifestMaker
 
 
 class IIIFPipeline:
@@ -25,7 +26,8 @@ class IIIFPipeline:
             replace (bool): Flag to replace existing files.
         """
         if not os.path.isdir(source_dir):
-            raise Exception("{} is not a path to a directory.".format(source_dir))
+            raise Exception(
+                "{} is not a path to a directory.".format(source_dir))
         as_client = ArchivesSpaceClient(
             self.config.get("ArchivesSpace", "baseurl"),
             self.config.get("ArchivesSpace", "username"),
@@ -49,7 +51,8 @@ class IIIFPipeline:
             try:
                 obj_source_dir = os.path.join(directory, "master")
                 if not os.path.isdir(os.path.join(source_dir, obj_source_dir)):
-                    raise Exception("Object directory {} does not have a subdirectory named `master`".format(directory))
+                    raise Exception(
+                        "Object directory {} does not have a subdirectory named `master`".format(directory))
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
                 create_jp2(matching_files(obj_source_dir, skip=skip, prepend=True), jp2_dir, identifier, replace)

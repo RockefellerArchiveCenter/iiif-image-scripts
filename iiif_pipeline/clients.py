@@ -1,7 +1,7 @@
-import boto3
-import magic
 import os
 
+import boto3
+import magic
 from asnake import utils
 from asnake.aspace import ASpace
 from botocore.exceptions import ClientError
@@ -27,7 +27,8 @@ class ArchivesSpaceClient:
         results = self.client.get(
             'repositories/{}/find_by_id/archival_objects?ref_id[]={}'.format(self.repository, ref_id)).json()
         if not results.get("archival_objects"):
-            raise Exception("Could not find an ArchivesSpace object matching refid: {}".format(ref_id))
+            raise Exception(
+                "Could not find an ArchivesSpace object matching refid: {}".format(ref_id))
         else:
             obj_ref = results["archival_objects"][0]["ref"]
             obj = self.client.get(obj_ref).json()
@@ -43,7 +44,8 @@ class ArchivesSpaceClient:
             parsed (dict): Parsed data, with only required fields present.
         """
         title = data.get("title", data.get("display_string")).title()
-        dates = ", ".join([utils.get_date_display(d, self.client) for d in data.get("dates", [])])
+        dates = ", ".join([utils.get_date_display(d, self.client)
+                           for d in data.get("dates", [])])
         return {"title": title, "dates": dates, "uri": data["uri"]}
 
 
@@ -74,7 +76,8 @@ class AWSClient:
                 if file.endswith(".json"):
                     content_type = "application/json"
                 else:
-                    # TODO: evaluate if we need to use this library or if mimetypes will work?
+                    # TODO: evaluate if we need to use this library or if
+                    # mimetypes will work?
                     content_type = magic.from_file(file, mime=True)
                 self.s3.meta.client.upload_file(
                     file, self.bucket, bucket_path,
@@ -90,7 +93,9 @@ class AWSClient:
             boolean: True if file exists, false otherwise.
         """
         try:
-            self.s3.Object(self.bucket, os.path.join(destination_dir, key)).load()
+            self.s3.Object(
+                self.bucket, os.path.join(
+                    destination_dir, key)).load()
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == "404":

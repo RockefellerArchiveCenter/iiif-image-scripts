@@ -3,13 +3,14 @@ import random
 import shutil
 from unittest.mock import patch
 
-from iiif_pipeline.pipeline import IIIFPipeline
 from helpers import archivesspace_vcr, copy_sample_files, random_string
+from iiif_pipeline.pipeline import IIIFPipeline
 
 SOURCE_DIR = os.path.join("/", "source")
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")
 UUIDS = [random_string() for x in range(random.randint(2, 3))]
 PAGE_COUNT = random.randint(1, 5)
+
 
 def setup():
     if os.path.isdir(SOURCE_DIR):
@@ -46,7 +47,10 @@ def test_pipeline_exception(mock_aws_client, mock_get_object, caplog):
     caught and logged.
     """
     exception_text = random_string()
-    mock_get_object.return_value = {"title": random_string(), "dates": "1945-1950", "uri": random_string()}
+    mock_get_object.return_value = {
+        "title": random_string(),
+        "dates": "1945-1950",
+        "uri": random_string()}
     mock_aws_client.side_effect = Exception(exception_text)
     with archivesspace_vcr.use_cassette("get_ao.json"):
         IIIFPipeline().run(SOURCE_DIR, False, False)

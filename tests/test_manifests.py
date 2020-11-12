@@ -4,9 +4,8 @@ import random
 import shutil
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.manifests import ManifestMaker
 from iiif_pipeline.helpers import matching_files
-
+from iiif_pipeline.manifests import ManifestMaker
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
 DERIVATIVE_DIR = os.path.join("/", "derivatives")

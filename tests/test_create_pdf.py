@@ -27,7 +27,13 @@ def setup():
 def test_create_pdf():
     """Ensure the run method produces the expected number of files."""
     identifier = random.choice(UUIDS)
-    create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
+    create_pdf(
+        matching_files(
+            DERIVATIVE_DIR,
+            prefix=identifier,
+            prepend=True),
+        identifier,
+        PDF_DIR)
     assert len(os.listdir(PDF_DIR)) == 1
     assert os.path.isfile(os.path.join(PDF_DIR, "{}.pdf".format(identifier)))
 

@@ -1,8 +1,8 @@
 import os
-import pytest
 import random
 import shutil
 
+import pytest
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.derivatives import create_pdf
 from iiif_pipeline.helpers import matching_files
@@ -45,10 +45,29 @@ def test_replace_pdf():
     be raised.
     """
     identifier = random.choice(UUIDS)
-    create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
+    create_pdf(
+        matching_files(
+            DERIVATIVE_DIR,
+            prefix=identifier,
+            prepend=True),
+        identifier,
+        PDF_DIR)
     with pytest.raises(FileExistsError):
-        create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR)
-    create_pdf(matching_files(DERIVATIVE_DIR, prefix=identifier, prepend=True), identifier, PDF_DIR, replace=True)
+        create_pdf(
+            matching_files(
+                DERIVATIVE_DIR,
+                prefix=identifier,
+                prepend=True),
+            identifier,
+            PDF_DIR)
+    create_pdf(
+        matching_files(
+            DERIVATIVE_DIR,
+            prefix=identifier,
+            prepend=True),
+        identifier,
+        PDF_DIR,
+        replace=True)
 
 
 def teardown():

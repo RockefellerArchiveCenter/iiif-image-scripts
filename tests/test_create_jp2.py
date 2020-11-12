@@ -1,8 +1,8 @@
 import os
-import pytest
 import random
 import shutil
 
+import pytest
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.derivatives import create_jp2
 from iiif_pipeline.helpers import matching_files
@@ -27,7 +27,14 @@ def setup():
 def test_create_jp2():
     """Ensure the run method produces the expected number of files."""
     uuid = random.choice(UUIDS)
-    create_jp2(matching_files(SOURCE_DIR, prefix=uuid, skip=False, prepend=True), DERIVATIVE_DIR, uuid)
+    create_jp2(
+        matching_files(
+            SOURCE_DIR,
+            prefix=uuid,
+            skip=False,
+            prepend=True),
+        DERIVATIVE_DIR,
+        uuid)
     assert len(os.listdir(DERIVATIVE_DIR)) == PAGE_COUNT
     for f in os.listdir(DERIVATIVE_DIR):
         assert ".tif" not in f
@@ -40,10 +47,32 @@ def test_replace_jp2():
     be raised.
     """
     uuid = random.choice(UUIDS)
-    create_jp2(matching_files(SOURCE_DIR, prefix=uuid, skip=False, prepend=True), DERIVATIVE_DIR, uuid)
+    create_jp2(
+        matching_files(
+            SOURCE_DIR,
+            prefix=uuid,
+            skip=False,
+            prepend=True),
+        DERIVATIVE_DIR,
+        uuid)
     with pytest.raises(FileExistsError):
-        create_jp2(matching_files(SOURCE_DIR, prefix=uuid, skip=False, prepend=True), DERIVATIVE_DIR, uuid)
-    create_jp2(matching_files(SOURCE_DIR, prefix=uuid, skip=False, prepend=True), DERIVATIVE_DIR, uuid, replace=True)
+        create_jp2(
+            matching_files(
+                SOURCE_DIR,
+                prefix=uuid,
+                skip=False,
+                prepend=True),
+            DERIVATIVE_DIR,
+            uuid)
+    create_jp2(
+        matching_files(
+            SOURCE_DIR,
+            prefix=uuid,
+            skip=False,
+            prepend=True),
+        DERIVATIVE_DIR,
+        uuid,
+        replace=True)
 
 
 def teardown():

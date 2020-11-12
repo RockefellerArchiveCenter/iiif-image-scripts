@@ -61,14 +61,16 @@ def create_jp2(files, derivative_dir, identifier, replace=False):
         derivative_path = os.path.join(
             derivative_dir, "{}_{}.jp2".format(identifier, os.path.splitext(original_file)[0].split("_")[-1]))
         if (os.path.isfile(derivative_path) and not replace):
-            raise FileExistsError("Error creating JPEG2000: {} already exists".format(derivative_path))
+            raise FileExistsError(
+                "Error creating JPEG2000: {} already exists".format(derivative_path))
         else:
             if is_tiff(original_file):
                 try:
                     layers = calculate_layers(original_file)
                     cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
                         original_file, derivative_path, layers, ' '.join(default_options))
-                    subprocess.check_output([cmd], stderr=subprocess.STDOUT, shell=True)
+                    subprocess.check_output(
+                        [cmd], stderr=subprocess.STDOUT, shell=True)
                 except Exception as e:
                     raise Exception(
                         "Error creating JPEG2000: {}".format(e)) from e
@@ -88,7 +90,8 @@ def create_pdf(files, identifier, pdf_dir, replace=False):
     """
     pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
     if (os.path.isfile(pdf_path) and not replace):
-        raise FileExistsError("Error creating PDF: {} already exists".format(pdf_path))
+        raise FileExistsError(
+            "Error creating PDF: {} already exists".format(pdf_path))
     try:
         with open(pdf_path, "wb") as f:
             f.write(img2pdf.convert(files))

@@ -1,8 +1,8 @@
 import os
-import pytest
 import random
 import shutil
 
+import pytest
 from helpers import copy_sample_files, random_string
 from iiif_pipeline.helpers import matching_files
 from iiif_pipeline.manifests import ManifestMaker

@@ -55,20 +55,44 @@ class IIIFPipeline:
                         "Object directory {} does not have a subdirectory named `master`".format(directory))
                 obj_data = as_client.get_object(ref_id)
                 identifier = shortuuid.uuid(name=obj_data["uri"])
-                create_jp2(matching_files(obj_source_dir, skip=skip, prepend=True), jp2_dir, identifier, replace)
-                logging.info("JPEG2000 derivatives created for {}".format(identifier))
+                create_jp2(
+                    matching_files(
+                        obj_source_dir,
+                        skip=skip,
+                        prepend=True),
+                    jp2_dir,
+                    identifier,
+                    replace)
+                logging.info(
+                    "JPEG2000 derivatives created for {}".format(identifier))
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl"), manifest_dir).create_manifest(
                         matching_files(jp2_dir, prefix=identifier), jp2_dir, identifier, obj_data, replace)
                 logging.info("IIIF Manifest created for {}".format(identifier))
-                create_pdf(matching_files(jp2_dir, prefix=identifier, prepend=True), identifier, pdf_dir, replace)
-                logging.info("Concatenated PDF created for {}".format(identifier))
+                create_pdf(
+                    matching_files(
+                        jp2_dir,
+                        prefix=identifier,
+                        prepend=True),
+                    identifier,
+                    pdf_dir,
+                    replace)
+                logging.info(
+                    "Concatenated PDF created for {}".format(identifier))
                 for src_dir, target_dir, file_type in [
                         (jp2_dir, "images", "JPEG2000 files"),
                         (pdf_dir, "pdfs", "PDF file"),
                         (manifest_dir, "manifests", "Manifest file")]:
-                    aws_client.upload_files(matching_files(src_dir, prefix=identifier, prepend=True), target_dir, replace)
-                    logging.info("{} uploaded for {}".format(file_type, identifier))
+                    aws_client.upload_files(
+                        matching_files(
+                            src_dir,
+                            prefix=identifier,
+                            prepend=True),
+                        target_dir,
+                        replace)
+                    logging.info(
+                        "{} uploaded for {}".format(
+                            file_type, identifier))
                 cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
             except Exception as e:
                 print(e)

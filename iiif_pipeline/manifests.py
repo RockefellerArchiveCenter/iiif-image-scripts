@@ -1,6 +1,8 @@
+import json
 import os
 
 from iiif_prezi.factory import ManifestFactory
+from iiif_prezi_upgrader import Upgrader
 from PIL import Image
 
 THUMBNAIL_HEIGHT = 200
@@ -18,6 +20,7 @@ class ManifestMaker:
         self.fac.set_base_prezi_uri("{}/manifests/".format(self.server_url))
         self.fac.set_base_image_uri(self.resource_url)
         self.fac.set_debug("error")
+        self.upgrader = Upgrader()
 
     def create_manifest(self, files, image_dir, identifier,
                         obj_data, replace=False):
@@ -55,7 +58,10 @@ class ManifestMaker:
             self.set_image_data(img, height, width, page_ref)
             canvas.thumbnail = self.set_thumbnail(page_ref)
             page_number += 1
-        manifest.toFile(compact=False)
+        v2_json = manifest.toJSON(top=True)
+        v3_json = self.upgrader.process_resource(v2_json, top=True)
+        with open(manifest_path, 'w', encoding='utf-8') as jf:
+            json.dump(v3_json, jf, ensure_ascii=False, indent=4)
 
     def get_image_info(self, image_dir, file):
         """Gets information about the image file.

@@ -10,6 +10,9 @@ def main():
         "source_directory",
         help="A directory containing subdirectories (named using ref ids) for archival objects.")
     parser.add_argument(
+        "target_directory",
+        help="A directory in which to create generated image derivatives and manifests.")
+    parser.add_argument(
         "--skip",
         action="store_true",
         help="Skip files ending in `_001` during derivative creation.")

@@ -69,7 +69,7 @@ class AWSClient:
         for file in files:
             key = os.path.splitext(os.path.basename(file))[0]
             bucket_path = os.path.join(destination_dir, key)
-            if (self.object_in_bucket(bucket_path) and not replace):
+            if (self.object_in_bucket(bucket_path, key) and not replace):
                 raise FileExistsError(
                     "Error uploading files to AWS: {} already exists in {}".format(bucket_path, self.bucket))
             else:

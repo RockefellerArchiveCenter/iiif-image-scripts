@@ -1,10 +1,12 @@
 import os
 import random
 import shutil
+from unittest.mock import patch
 
 from botocore.stub import Stubber
 from helpers import copy_sample_files, get_config, random_string
 from iiif_pipeline.clients import AWSClient
+from iiif_pipeline.helpers import matching_files
 
 MANIFEST_FIXTURES = os.path.join("fixtures", "manifests")
 MANIFEST_DIR = os.path.join("/", "manifests")
@@ -51,6 +53,25 @@ def test_object_in_bucket():
         not_found = aws.object_in_bucket(DERIVATIVE_DIR, key)
         assert not not_found
 
-# TODO: tests for run method.
-# The trick here is that the botocore Stubber does not include methods for
-# upload_file, so we'll need to find some other way of mocking that.
+
+@patch("boto3.s3.transfer.S3Transfer.upload_file")
+def test_upload_files(mock_upload):
+    config = get_config()
+    aws = AWSClient(
+        config.get("S3", "region_name"),
+        config.get("S3", "aws_access_key_id"),
+        config.get("S3", "aws_secret_access_key"),
+        config.get("S3", "bucketname"))
+    for src_dir, target_dir in [
+            (DERIVATIVE_DIR, "images"),
+            (MANIFEST_DIR, "manifests")]:
+        uploads = matching_files(
+            src_dir,
+            prefix=random.choice(UUIDS),
+            prepend=True)
+        aws.upload_files(uploads, target_dir, False)
+
+
+def teardown():
+    for d in [MANIFEST_DIR, DERIVATIVE_DIR]:
+        shutil.rmtree(d)

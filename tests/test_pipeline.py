@@ -7,14 +7,16 @@ from helpers import archivesspace_vcr, copy_sample_files, random_string
 from iiif_pipeline.pipeline import IIIFPipeline
 
 SOURCE_DIR = os.path.join("/", "source")
+TARGET_DIR = os.path.join("/", "target")
 FIXTURES_FILEPATH = os.path.join("fixtures", "tif")
 UUIDS = [random_string() for x in range(random.randint(2, 3))]
 PAGE_COUNT = random.randint(1, 5)
 
 
 def setup():
-    if os.path.isdir(SOURCE_DIR):
-        shutil.rmtree(SOURCE_DIR)
+    for d in [SOURCE_DIR, TARGET_DIR]:
+        if os.path.isdir(d):
+            shutil.rmtree(d)
     shutil.copytree(FIXTURES_FILEPATH, SOURCE_DIR)
     copy_sample_files(SOURCE_DIR, UUIDS, PAGE_COUNT, "tif", to_master=True)
 
@@ -32,10 +34,10 @@ def test_pipeline(mock_aws_client, mock_get_object):
         {"title": random_string(), "dates": "1950-1951", "uri": random_string()},
         {"title": random_string(), "dates": "1945-1973", "uri": random_string()}]
     with archivesspace_vcr.use_cassette("get_ao.json"):
-        IIIFPipeline().run(SOURCE_DIR, False, False)
+        IIIFPipeline().run(SOURCE_DIR, TARGET_DIR, False, False)
         for subpath in ["images", "pdfs", "manifests"]:
-            assert os.path.isdir(os.path.join(SOURCE_DIR, subpath))
-            assert len(os.listdir(os.path.join(SOURCE_DIR, subpath))) == 0
+            assert os.path.isdir(os.path.join(TARGET_DIR, subpath))
+            assert len(os.listdir(os.path.join(TARGET_DIR, subpath))) == 0
 
 
 @patch("iiif_pipeline.clients.ArchivesSpaceClient.get_object")
@@ -53,14 +55,15 @@ def test_pipeline_exception(mock_aws_client, mock_get_object, caplog):
         "uri": random_string()}
     mock_aws_client.side_effect = Exception(exception_text)
     with archivesspace_vcr.use_cassette("get_ao.json"):
-        IIIFPipeline().run(SOURCE_DIR, False, False)
+        IIIFPipeline().run(SOURCE_DIR, TARGET_DIR, False, False)
         assert len(caplog.records) == len(UUIDS)
         for log in caplog.records:
             assert log.getMessage() == exception_text
         for subpath in ["images", "pdfs", "manifests"]:
-            assert os.path.isdir(os.path.join(SOURCE_DIR, subpath))
-            assert len(os.listdir(os.path.join(SOURCE_DIR, subpath))) == 0
+            assert os.path.isdir(os.path.join(TARGET_DIR, subpath))
+            assert len(os.listdir(os.path.join(TARGET_DIR, subpath))) == 0
 
 
 def teardown():
-    shutil.rmtree(SOURCE_DIR)
+    for d in [SOURCE_DIR, TARGET_DIR]:
+        shutil.rmtree(d)

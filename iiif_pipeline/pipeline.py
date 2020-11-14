@@ -17,7 +17,7 @@ class IIIFPipeline:
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
 
-    def run(self, source_dir, skip, replace):
+    def run(self, source_dir, target_dir, skip, replace):
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
 
         Args:
@@ -38,9 +38,9 @@ class IIIFPipeline:
             self.config.get("S3", "aws_access_key_id"),
             self.config.get("S3", "aws_secret_access_key"),
             self.config.get("S3", "bucketname"))
-        jp2_dir = os.path.join(source_dir, "images")
-        pdf_dir = os.path.join(source_dir, "pdfs")
-        manifest_dir = os.path.join(source_dir, "manifests")
+        jp2_dir = os.path.join(target_dir, "images")
+        pdf_dir = os.path.join(target_dir, "pdfs")
+        manifest_dir = os.path.join(target_dir, "manifests")
         for path in [jp2_dir, pdf_dir, manifest_dir]:
             if not os.path.exists(path):
                 os.makedirs(path)

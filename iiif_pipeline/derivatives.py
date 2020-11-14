@@ -1,9 +1,9 @@
 import math
 import os
 import subprocess
+from mimetypes import MimeTypes
 
 import img2pdf
-import magic
 from PIL import Image
 
 
@@ -32,8 +32,7 @@ def is_tiff(file):
     Returns:
         boolean: True if tiff file, false otherwise.
     """
-    # TODO: evaluate if we can use mimetypes library instead
-    content_type = magic.from_file(file, mime=True)
+    content_type = MimeTypes().guess_type(file)[0]
     return True if content_type == "image/tiff" else False
 
 

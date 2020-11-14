@@ -1,7 +1,6 @@
 import os
 
 import boto3
-import magic
 from asnake import utils
 from asnake.aspace import ASpace
 from botocore.exceptions import ClientError
@@ -73,12 +72,11 @@ class AWSClient:
                 raise FileExistsError(
                     "Error uploading files to AWS: {} already exists in {}".format(bucket_path, self.bucket))
             else:
+                content_type = "image/jp2"
                 if file.endswith(".json"):
                     content_type = "application/json"
-                else:
-                    # TODO: evaluate if we need to use this library or if
-                    # mimetypes will work?
-                    content_type = magic.from_file(file, mime=True)
+                elif file.endswith(".pdf"):
+                    content_type = "application/pdf"
                 self.s3.meta.client.upload_file(
                     file, self.bucket, bucket_path,
                     ExtraArgs={'ContentType': content_type})

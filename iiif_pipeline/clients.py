@@ -83,19 +83,17 @@ class AWSClient:
                     file, self.bucket, bucket_path,
                     ExtraArgs={'ContentType': content_type})
 
-    def object_in_bucket(self, destination_dir, key):
+    def object_in_bucket(self, object_path):
         """Checks if a file already exists in an S3 bucket.
 
         Args:
-            key (str): A filename without the trailing filetype.
-            dir (str): A directory path containing files.
+            object_path (str): Path to the object in the bucket.
         Returns:
             boolean: True if file exists, false otherwise.
         """
         try:
             self.s3.Object(
-                self.bucket, os.path.join(
-                    destination_dir, key)).load()
+                self.bucket, object_path).load()
             return True
         except ClientError as e:
             if e.response['Error']['Code'] == "404":

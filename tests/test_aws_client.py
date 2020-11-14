@@ -1,10 +1,12 @@
 import os
 import random
 import shutil
+from unittest.mock import patch
 
-from botocore.stub import Stubber
+from botocore.stub import ANY, Stubber
 from helpers import copy_sample_files, get_config, random_string
 from iiif_pipeline.clients import AWSClient
+from iiif_pipeline.helpers import matching_files
 
 MANIFEST_FIXTURES = os.path.join("fixtures", "manifests")
 MANIFEST_DIR = os.path.join("/", "manifests")
@@ -27,6 +29,7 @@ def setup():
 def test_object_in_bucket():
     config = get_config()
     key = random.choice(os.listdir(DERIVATIVE_DIR))
+    object_path = os.path.join(DERIVATIVE_DIR, key)
     aws = AWSClient(
         config.get("S3", "region_name"),
         config.get("S3", "aws_access_key_id"),
@@ -34,23 +37,48 @@ def test_object_in_bucket():
         config.get("S3", "bucketname"))
     expected_params = {
         "Bucket": config.get(
-            "S3", "bucketname"), "Key": os.path.join(
-            DERIVATIVE_DIR, key)}
+            "S3", "bucketname"), "Key": object_path}
     with Stubber(aws.s3.meta.client) as stubber:
         stubber.add_response(
             "head_object",
             service_response={},
             expected_params=expected_params)
-        found = aws.object_in_bucket(DERIVATIVE_DIR, key)
+        found = aws.object_in_bucket(object_path)
         assert found
 
         stubber.add_client_error(
             "head_object",
             service_error_code='404',
             expected_params=expected_params)
-        not_found = aws.object_in_bucket(DERIVATIVE_DIR, key)
+        not_found = aws.object_in_bucket(object_path)
         assert not not_found
 
-# TODO: tests for run method.
-# The trick here is that the botocore Stubber does not include methods for
-# upload_file, so we'll need to find some other way of mocking that.
+
+@patch("boto3.s3.transfer.S3Transfer.upload_file")
+def test_upload_files(mock_upload):
+    config = get_config()
+    identifier = random.choice(UUIDS)
+    aws = AWSClient(
+        config.get("S3", "region_name"),
+        config.get("S3", "aws_access_key_id"),
+        config.get("S3", "aws_secret_access_key"),
+        config.get("S3", "bucketname"))
+    expected_params = {
+        "Bucket": config.get(
+            "S3", "bucketname"), "Key": ANY}
+    with Stubber(aws.s3.meta.client) as stubber:
+        for src_dir, target_dir in [
+                (DERIVATIVE_DIR, "images"),
+                (MANIFEST_DIR, "manifests")]:
+            uploads = matching_files(src_dir, prefix=identifier, prepend=True)
+            for x in range(len(uploads)):
+                stubber.add_client_error(
+                    "head_object",
+                    service_error_code='404',
+                    expected_params=expected_params)
+            aws.upload_files(uploads, target_dir, False)
+
+
+def teardown():
+    for d in [MANIFEST_DIR, DERIVATIVE_DIR]:
+        shutil.rmtree(d)

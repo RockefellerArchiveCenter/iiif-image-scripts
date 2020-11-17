@@ -21,7 +21,11 @@ def main():
         action="store_true",
         help="Replace existing files.")
     args = parser.parse_args()
-    IIIFPipeline().run(args.source_directory, args.skip, args.replace)
+    IIIFPipeline().run(
+        args.source_directory,
+        args.target_directory,
+        args.skip,
+        args.replace)
 
 
 if __name__ == "__main__":

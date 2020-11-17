@@ -54,7 +54,7 @@ class ManifestMaker:
             canvas.set_hw(height, width)
             annotation = canvas.annotation(ident=page_ref)
             img = annotation.image(
-                ident="{}/full/max/0/default.jpg".format(page_ref))
+                ident="/{}/full/max/0/default.jpg".format(page_ref))
             self.set_image_data(img, height, width, page_ref)
             canvas.thumbnail = self.set_thumbnail(page_ref)
             page_number += 1
@@ -104,7 +104,7 @@ class ManifestMaker:
             thumbnail (object): An iiif_prezi Image object.
         """
         thumbnail = self.fac.image(
-            ident="{}/square/{},/0/default.jpg".format(identifier, THUMBNAIL_WIDTH))
+            ident="/{}/square/{},/0/default.jpg".format(identifier, THUMBNAIL_WIDTH))
         self.set_image_data(
             thumbnail,
             THUMBNAIL_HEIGHT,

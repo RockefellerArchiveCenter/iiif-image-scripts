@@ -25,6 +25,7 @@ to `/source_files/` in the running container and then execute `iiif_pipeline.py`
 The entire suite has the following system dependencies:
 - Python 3 (tested on Python 3.6)
 - OpenJPEG
+- Ghostscript
 
 It also requires these Python libraries in order to work correctly.
 - [ArchivesSnake](https://pypi.org/project/ArchivesSnake/)

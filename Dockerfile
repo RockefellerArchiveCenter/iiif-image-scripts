@@ -10,7 +10,8 @@ RUN apt-get update -y && apt-get install -y wget \
   make \
   pkg-config \
   libtiff-dev \
-  libmagic-dev
+  libmagic-dev \
+  ghostscript
 
 # Download and compile openjpeg2.1
 WORKDIR /tmp/openjpeg

@@ -57,8 +57,8 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                        "-p RPCL"
                        ]
     for original_file in files:
-        derivative_path = os.path.join(
-            derivative_dir, "{}_{}.jp2".format(identifier, os.path.splitext(original_file)[0].split("_")[-1]))
+        derivative_path = os.path.join(derivative_dir, "{}_{}.jp2".format(
+            identifier, os.path.splitext(original_file)[0].split("_")[-1]))
         if (os.path.isfile(derivative_path) and not replace):
             raise FileExistsError(
                 "Error creating JPEG2000: {} already exists".format(derivative_path))
@@ -96,3 +96,24 @@ def create_pdf(files, identifier, pdf_dir, replace=False):
             f.write(img2pdf.convert(files))
     except Exception as e:
         raise Exception("Error creating PDF: {}".format(e)) from e
+
+
+def compress_pdf(identifier, pdf_dir):
+    """Compress PDF via Ghostscript command line interface and delete original PDF.
+    Delete original PDF when complete, replace compressed PDF with original filename.
+
+    Args:
+        identifier (str): Identifier of created PDF file.
+        pdf_dir (str): Directory in which to save the PDF file.
+    """
+    source_pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
+    output_pdf_path = "{}_compressed.pdf".format(
+        os.path.join(pdf_dir, identifier))
+    subprocess.call(['gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4',
+                     '-dPDFSETTINGS={}'.format('/screen'),
+                     '-dNOPAUSE', '-dQUIET', '-dBATCH',
+                     '-sOutputFile={}'.format(output_pdf_path),
+                     source_pdf_path]
+                    )
+    os.remove(source_pdf_path)
+    os.rename(output_pdf_path, source_pdf_path)

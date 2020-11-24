@@ -12,8 +12,11 @@ from .manifests import ManifestMaker
 
 class IIIFPipeline:
     def __init__(self):
-        logfile = 'iiif_generation.log'
-        logging.basicConfig(filename=logfile, level=logging.INFO)
+        logging.basicConfig(
+            datefmt='%m/%d/%Y %I:%M:%S %p',
+            filename='iiif_generation.log',
+            format='%(asctime)s %(message)s',
+            level=logging.INFO)
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
 

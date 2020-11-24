@@ -16,7 +16,7 @@ RUN apt-get update -y && apt-get install -y wget \
 # Download and compile openjpeg2.1
 WORKDIR /tmp/openjpeg
 RUN git clone https://github.com/uclouvain/openjpeg.git ./
-RUN git checkout tags/version.2.1
+RUN git checkout tags/v2.3.1
 RUN cmake . && make && make install
 
 RUN mkdir /code

@@ -106,6 +106,5 @@ def process_pdf(identifier, pdf_dir):
         pdf_dir (str): Directory in which to save the PDF file.
     """
     pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
-    subprocess.call(['ocrmypdf', '--optimize', '2',
+    subprocess.call(['ocrmypdf', '--optimize', '1',
                      '--quiet', pdf_path, pdf_path])
-    print(os.stat(pdf_path).st_size)

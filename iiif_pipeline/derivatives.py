@@ -98,22 +98,14 @@ def create_pdf(files, identifier, pdf_dir, replace=False):
         raise Exception("Error creating PDF: {}".format(e)) from e
 
 
-def compress_pdf(identifier, pdf_dir):
-    """Compress PDF via Ghostscript command line interface and delete original PDF.
-    Delete original PDF when complete, replace compressed PDF with original filename.
+def process_pdf(identifier, pdf_dir):
+    """Add OCR layer and compress PDF using ocrmypdf.
 
     Args:
         identifier (str): Identifier of created PDF file.
         pdf_dir (str): Directory in which to save the PDF file.
     """
-    source_pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
-    output_pdf_path = "{}_compressed.pdf".format(
-        os.path.join(pdf_dir, identifier))
-    subprocess.call(['gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4',
-                     '-dPDFSETTINGS={}'.format('/screen'),
-                     '-dNOPAUSE', '-dQUIET', '-dBATCH',
-                     '-sOutputFile={}'.format(output_pdf_path),
-                     source_pdf_path]
-                    )
-    os.remove(source_pdf_path)
-    os.rename(output_pdf_path, source_pdf_path)
+    pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
+    subprocess.call(['ocrmypdf', '--optimize', '2',
+                     '--quiet', pdf_path, pdf_path])
+    print(os.stat(pdf_path).st_size)

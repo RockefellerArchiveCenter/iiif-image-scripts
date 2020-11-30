@@ -74,7 +74,7 @@ class IIIFPipeline:
                     "Concatenated PDF created for {}".format(identifier))
                 process_pdf(identifier, pdf_dir)
                 logging.info(
-                    "Compressed PDF created for {}".format(identifier))
+                    "Compressed and OCRed PDF created for {}".format(identifier))
                 for src_dir, target_dir, file_type in [
                         (jp2_dir, "images", "JPEG2000 files"),
                         (pdf_dir, "pdfs", "PDF file"),

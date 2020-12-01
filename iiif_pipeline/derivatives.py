@@ -99,8 +99,9 @@ def create_pdf(files, identifier, pdf_dir, replace=False):
 
 
 def compress_pdf(identifier, pdf_dir):
-    """Compress PDF via Ghostscript command line interface and delete original PDF.
-    Delete original PDF when complete, replace compressed PDF with original filename.
+    """Compress PDF via Ghostscript command line interface.
+
+    Original PDF is replaced with compressed PDF.
 
     Args:
         identifier (str): Identifier of created PDF file.
@@ -120,7 +121,7 @@ def compress_pdf(identifier, pdf_dir):
 
 
 def process_pdf(identifier, pdf_dir):
-    """Add OCR layer and compress PDF using ocrmypdf.
+    """Add OCR layer using ocrmypdf.
 
     Args:
         identifier (str): Identifier of created PDF file.

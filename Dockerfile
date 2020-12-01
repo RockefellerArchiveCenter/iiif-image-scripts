@@ -12,6 +12,7 @@ RUN apt-get update -y && apt-get install -y wget \
   libtiff-dev \
   libmagic-dev \
   libleptonica-dev \
+  ghostscript \
   ocrmypdf
 
 # Download and compile openjpeg2.1

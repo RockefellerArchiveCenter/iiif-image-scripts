@@ -66,13 +66,14 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
             if is_tiff(original_file):
                 try:
                     layers = calculate_layers(original_file)
-                    cmd = "opj_compress -i {} -o {} -n {} {} -SOP".format(
+                    cmd = "/usr/local/bin/opj_compress -i {} -o {} -n {} {} -SOP".format(
                         original_file, derivative_path, layers, ' '.join(default_options))
-                    subprocess.check_output(
+                    output = subprocess.check_output(
                         [cmd], stderr=subprocess.STDOUT, shell=True)
-                except Exception as e:
-                    raise Exception(
-                        "Error creating JPEG2000: {}".format(e)) from e
+                except subprocess.CalledProcessError as e:
+                    raise RuntimeError(
+                        "command '{}' returned with error (code {}): {}".format(
+                            e.cmd, e.returncode, e.output))
             else:
                 raise Exception(
                     "Error creating JPEG2000: {} is not a valid TIFF".format(original_file))

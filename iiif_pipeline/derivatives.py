@@ -120,7 +120,7 @@ def compress_pdf(identifier, pdf_dir):
     os.rename(output_pdf_path, source_pdf_path)
 
 
-def process_pdf(identifier, pdf_dir):
+def ocr_pdf(identifier, pdf_dir):
     """Add OCR layer using ocrmypdf.
 
     Args:

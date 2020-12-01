@@ -68,7 +68,7 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                     layers = calculate_layers(original_file)
                     cmd = "/usr/local/bin/opj_compress -i {} -o {} -n {} {} -SOP".format(
                         original_file, derivative_path, layers, ' '.join(default_options))
-                    output = subprocess.check_output(
+                    subprocess.check_output(
                         [cmd], stderr=subprocess.STDOUT, shell=True)
                 except subprocess.CalledProcessError as e:
                     raise RuntimeError(

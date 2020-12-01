@@ -15,7 +15,8 @@ Then build the image:
 
 You can then run the pipeline, mounting any local directories you need access to.
 For example, the command above will mount `/local_files/` on your local machine
-to `/source_files/` in the running container and then execute `iiif_pipeline.py`:
+to `/source_files/` in the running container and then execute `iiif_pipeline.py`,
+using `/tmp` in the container as a destination directory:
 
     $ docker run -v /local_files:/source_files iiif-pipeline python iiif-pipeline.py /source_files /tmp
 
@@ -59,11 +60,14 @@ contains a subdirectory named `master` containing original TIFF files:
 
 This library is designed to be executed from the command line:
 
-    $ iiif-pipeline.py source_directory [--skip] [--replace]
+    $ iiif-pipeline.py source_directory target_directory [--skip] [--replace]
 
-where `source_directory` is a path to the directory described, the
-optional `--skip` flag will skip image files with filenames ending in `_001`,
-and the optional `--replace` flag will replace existing files.
+where `source_directory` is a path to the directory described above and
+`target_directory` is a path at which the derivative and manifest files will be
+created before they are uploaded. The user running the script must own the
+`target_directory`. The optional `--skip` flag will skip image files with
+filenames ending in `_001`, and the optional `--replace` flag will replace
+existing files.
 
 
 ## Configuration

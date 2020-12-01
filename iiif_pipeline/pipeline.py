@@ -5,7 +5,7 @@ from configparser import ConfigParser
 import shortuuid
 
 from .clients import ArchivesSpaceClient, AWSClient
-from .derivatives import compress_pdf, create_jp2, create_pdf
+from .derivatives import compress_pdf, create_jp2, create_pdf, ocr_pdf
 from .helpers import cleanup_files, matching_files, refid_dirs
 from .manifests import ManifestMaker
 
@@ -75,6 +75,9 @@ class IIIFPipeline:
                 compress_pdf(identifier, pdf_dir)
                 logging.info(
                     "Compressed PDF created for {}".format(identifier))
+                ocr_pdf(identifier, pdf_dir)
+                logging.info(
+                    "OCRed PDF created for {}".format(identifier))
                 for src_dir, target_dir, file_type in [
                         (jp2_dir, "images", "JPEG2000 files"),
                         (pdf_dir, "pdfs", "PDF file"),

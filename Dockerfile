@@ -11,7 +11,6 @@ RUN apt-get update -y && apt-get install -y wget \
   pkg-config \
   libtiff-dev \
   libmagic-dev \
-  libleptonica-dev \
   ghostscript \
   ocrmypdf
 

@@ -21,11 +21,6 @@ RUN git clone https://github.com/uclouvain/openjpeg.git ./
 RUN git checkout tags/v2.3.1
 RUN cmake . && make && make install
 
-# Download and compile JBIG2 Encoder
-WORKDIR /tmp/jbig2enc
-RUN git clone https://github.com/agl/jbig2enc ./
-RUN ./autogen.sh && ./configure && make && make install
-
 RUN mkdir /code
 WORKDIR /code
 

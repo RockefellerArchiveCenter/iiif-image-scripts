@@ -14,7 +14,7 @@ RUN apt-get update -y && apt-get install -y wget \
   ghostscript \
   ocrmypdf
 
-# Download and compile openjpeg2.1
+# Download and compile openjpeg2.3
 WORKDIR /tmp/openjpeg
 RUN git clone https://github.com/uclouvain/openjpeg.git ./
 RUN git checkout tags/v2.3.1

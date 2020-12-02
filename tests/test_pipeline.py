@@ -56,8 +56,9 @@ def test_pipeline_exception(mock_aws_client, mock_get_object, caplog):
     mock_aws_client.side_effect = Exception(exception_text)
     with archivesspace_vcr.use_cassette("get_ao.json"):
         IIIFPipeline().run(SOURCE_DIR, TARGET_DIR, False, False)
-        assert len(caplog.records) == len(UUIDS)
-        for log in caplog.records:
+        log_records = [r for r in caplog.records if r.levelname == "ERROR"]
+        assert len(log_records) == len(UUIDS)
+        for log in log_records:
             assert log.getMessage() == exception_text
         for subpath in ["images", "pdfs", "manifests"]:
             assert os.path.isdir(os.path.join(TARGET_DIR, subpath))

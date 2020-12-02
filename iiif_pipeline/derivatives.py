@@ -1,4 +1,5 @@
 import math
+import ocrmypdf
 import os
 import subprocess
 from mimetypes import MimeTypes
@@ -129,5 +130,4 @@ def ocr_pdf(identifier, pdf_dir):
         pdf_dir (str): Directory in which to save the PDF file.
     """
     pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
-    subprocess.call(['ocrmypdf', '--optimize', '0', '--output-type', 'pdf',
-                     '--quiet', pdf_path, pdf_path])
+    ocrmypdf.ocr(pdf_path, pdf_path, optimize=0, output_type="pdf", quiet=True)

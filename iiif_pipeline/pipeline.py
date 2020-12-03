@@ -95,11 +95,11 @@ class IIIFPipeline:
                 cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
             except Exception as e:
                 print(
-                    "Error processing identifier {} with ref_id: {}".format(
+                    "Error processing identifier {} with ref_id {}: {}".format(
                         identifier, ref_id, e))
                 if identifier:
                     cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
                 logging.error(
-                    "Error processing identifier {} with ref_id: {}".format(
+                    "Error processing identifier {} with ref_id {}: {}".format(
                         identifier, ref_id, e))
                 pass

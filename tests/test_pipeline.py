@@ -48,18 +48,15 @@ def test_pipeline_exception(mock_aws_client, mock_get_object, caplog):
     Target directories are expected to be empty, and the exception should be
     caught and logged.
     """
-    exception_text = random_string()
     mock_get_object.return_value = {
         "title": random_string(),
         "dates": "1945-1950",
         "uri": random_string()}
-    mock_aws_client.side_effect = Exception(exception_text)
+    mock_aws_client.side_effect = Exception()
     with archivesspace_vcr.use_cassette("get_ao.json"):
         IIIFPipeline().run(SOURCE_DIR, TARGET_DIR, False, False)
         log_records = [r for r in caplog.records if r.levelname == "ERROR"]
         assert len(log_records) == len(UUIDS)
-        for log in log_records:
-            assert log.getMessage() == exception_text
         for subpath in ["images", "pdfs", "manifests"]:
             assert os.path.isdir(os.path.join(TARGET_DIR, subpath))
             assert len(os.listdir(os.path.join(TARGET_DIR, subpath))) == 0

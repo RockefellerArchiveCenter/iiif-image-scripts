@@ -64,22 +64,24 @@ class IIIFPipeline:
                     obj_source_dir, skip=skip, prepend=True)
                 create_jp2(tiff_files, identifier, jp2_dir, replace)
                 logging.info(
-                    "JPEG2000 derivatives created for {}".format(identifier))
+                    "JPEG2000 derivatives with identifier {} created for ref_id {}".format(identifier, ref_id))
                 ManifestMaker(
                     self.config.get("ImageServer", "baseurl"), manifest_dir).create_manifest(
                         matching_files(jp2_dir, prefix=identifier), jp2_dir, identifier, obj_data, replace)
-                logging.info("IIIF Manifest created for {}".format(identifier))
+                logging.info(
+                    "IIIF Manifest with identifier {} created for ref_id {}".format(
+                        identifier, ref_id))
                 jp2_files = matching_files(
                     jp2_dir, prefix=identifier, prepend=True)
                 create_pdf(jp2_files, identifier, pdf_dir, replace)
                 logging.info(
-                    "Concatenated PDF created for {}".format(identifier))
+                    "Concatenated PDF with identifier {} created for ref_id {}".format(identifier, ref_id))
                 compress_pdf(identifier, pdf_dir)
                 logging.info(
-                    "Compressed PDF created for {}".format(identifier))
+                    "Compressed PDF with identifier {} created for {}".format(identifier, ref_id))
                 ocr_pdf(identifier, pdf_dir)
                 logging.info(
-                    "OCRed PDF created for {}".format(identifier))
+                    "OCRed PDF with identifier {} created for {}".format(identifier, ref_id))
                 for src_dir, target_dir, file_type in [
                         (jp2_dir, "images", "JPEG2000 files"),
                         (pdf_dir, "pdfs", "PDF file"),
@@ -92,8 +94,12 @@ class IIIFPipeline:
                             file_type, identifier))
                 cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
             except Exception as e:
-                print(e)
+                print(
+                    "Error processing identifier {} with ref_id {}: {}".format(
+                        identifier, ref_id, e))
                 if identifier:
                     cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
-                logging.error(e)
+                logging.error(
+                    "Error processing identifier {} with ref_id {}: {}".format(
+                        identifier, ref_id, e))
                 pass

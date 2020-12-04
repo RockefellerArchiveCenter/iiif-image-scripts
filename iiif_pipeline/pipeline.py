@@ -2,7 +2,6 @@ import logging
 import os
 from configparser import ConfigParser
 
-import ocrmypdf
 import shortuuid
 
 from .clients import ArchivesSpaceClient, AWSClient
@@ -20,7 +19,6 @@ class IIIFPipeline:
             level=logging.INFO)
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
-        ocrmypdf.configure_logging(verbosity=-1)
 
     def run(self, source_dir, target_dir, skip, replace):
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.

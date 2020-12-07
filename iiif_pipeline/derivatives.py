@@ -3,8 +3,6 @@ import os
 import subprocess
 from mimetypes import MimeTypes
 
-import img2pdf
-import ocrmypdf
 from PIL import Image
 
 
@@ -52,11 +50,10 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
         identifier (str): A unique identifier to use for derivative image filenaming.
         replace (bool): Replace existing derivative files.
     """
-    default_options = ["-r 1.5",
-                       "-c [256,256],[256,256],[128,128]",
-                       "-b 64,64",
-                       "-p RPCL"
-                       ]
+    default_options = ["-r", "1.5",
+                       "-c", "[256,256],[256,256],[128,128]",
+                       "-b", "64,64",
+                       "-p", "RPCL"]
     for original_file in files:
         derivative_path = os.path.join(derivative_dir, "{}_{}.jp2".format(
             identifier, os.path.splitext(original_file)[0].split("_")[-1]))
@@ -65,16 +62,12 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                 "Error creating JPEG2000: {} already exists".format(derivative_path))
         else:
             if is_tiff(original_file):
-                try:
-                    layers = calculate_layers(original_file)
-                    cmd = "/usr/local/bin/opj_compress -i {} -o {} -n {} {} -SOP".format(
-                        original_file, derivative_path, layers, ' '.join(default_options))
-                    subprocess.check_output(
-                        [cmd], stderr=subprocess.STDOUT, shell=True)
-                except subprocess.CalledProcessError as e:
-                    raise RuntimeError(
-                        "command '{}' returned with error (code {}): {}".format(
-                            e.cmd, e.returncode, e.output))
+                layers = calculate_layers(original_file)
+                subprocess.run(["/usr/local/bin/opj_compress",
+                                "-i", original_file,
+                                "-o", derivative_path,
+                                "-n", str(layers),
+                                "-SOP"] + default_options)
             else:
                 raise Exception(
                     "Error creating JPEG2000: {} is not a valid TIFF".format(original_file))
@@ -93,11 +86,7 @@ def create_pdf(files, identifier, pdf_dir, replace=False):
     if (os.path.isfile(pdf_path) and not replace):
         raise FileExistsError(
             "Error creating PDF: {} already exists".format(pdf_path))
-    try:
-        with open(pdf_path, "wb") as f:
-            f.write(img2pdf.convert(files))
-    except Exception as e:
-        raise Exception("Error creating PDF: {}".format(e)) from e
+    subprocess.run(["/usr/local/bin/img2pdf"] + files + ["-o", pdf_path])
 
 
 def compress_pdf(identifier, pdf_dir):
@@ -112,12 +101,12 @@ def compress_pdf(identifier, pdf_dir):
     source_pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
     output_pdf_path = "{}_compressed.pdf".format(
         os.path.join(pdf_dir, identifier))
-    subprocess.call(['gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4',
-                     '-dPDFSETTINGS={}'.format('/screen'),
-                     '-dNOPAUSE', '-dQUIET', '-dBATCH',
-                     '-sOutputFile={}'.format(output_pdf_path),
-                     source_pdf_path]
-                    )
+    subprocess.run(['gs', '-sDEVICE=pdfwrite', '-dCompatibilityLevel=1.4',
+                    '-dPDFSETTINGS={}'.format('/screen'),
+                    '-dNOPAUSE', '-dQUIET', '-dBATCH',
+                    '-sOutputFile={}'.format(output_pdf_path),
+                    source_pdf_path]
+                   )
     os.remove(source_pdf_path)
     os.rename(output_pdf_path, source_pdf_path)
 
@@ -130,4 +119,8 @@ def ocr_pdf(identifier, pdf_dir):
         pdf_dir (str): Directory in which to save the PDF file.
     """
     pdf_path = "{}.pdf".format(os.path.join(pdf_dir, identifier))
-    ocrmypdf.ocr(pdf_path, pdf_path, optimize=0, output_type="pdf")
+    subprocess.run(["/usr/local/bin/ocrmypdf",
+                    pdf_path, pdf_path,
+                    "--output-type", "pdf",
+                    "--optimize", "0",
+                    "--quiet"])

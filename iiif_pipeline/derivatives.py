@@ -122,5 +122,5 @@ def ocr_pdf(identifier, pdf_dir):
     subprocess.run(["/usr/local/bin/ocrmypdf",
                     pdf_path, pdf_path,
                     "--output-type", "pdf",
-                    "--optimize", "3",
+                    "--optimize", "0",
                     "--quiet"])

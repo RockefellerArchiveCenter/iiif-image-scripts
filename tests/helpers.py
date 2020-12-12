@@ -25,6 +25,7 @@ def copy_sample_files(directory, identifiers, page_count,
         identifiers (list): Identifiers used in filenames.
         page_count (int): The number of files to generate for each identifier.
         suffix (str): The filename suffix (extension) to be used
+        to_master (bool): If true, copy files to subdirectory named "master"
     """
     for f in os.listdir(directory):
         for ident in identifiers:

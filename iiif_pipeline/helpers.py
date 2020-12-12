@@ -2,7 +2,8 @@ from os import listdir, remove
 from os.path import isdir, isfile, join
 
 
-def matching_files(directory, prefix=None, skip=False, prepend=False):
+def matching_files(directory, prefix=None, suffix=None,
+                   skip=False, prepend=False):
     """Get a list of files that start with a specific prefix, optionally removing
     any files that end in `_001`.
 
@@ -18,6 +19,8 @@ def matching_files(directory, prefix=None, skip=False, prepend=False):
         isfile(join(directory, f)) and not f.startswith((".", "Thumbs")))])
     if prefix:
         files = sorted([f for f in files if f.startswith(prefix)])
+    if suffix:
+        files = sorted([f for f in files if f.endswith(suffix)])
     if skip:
         for file in files:
             if file.split('.')[0].endswith('_001'):

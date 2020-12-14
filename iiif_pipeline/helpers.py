@@ -10,6 +10,7 @@ def matching_files(directory, prefix=None, suffix=None,
     Args:
         directory (str): The directory containing files.
         prefix (str): A prefix to match filenames against.
+        suffix (str): A suffix (file extension) to match filenames against.
         skip (bool): Flag indicating if files ending with `_001` should be removed.
         prepend (bool): Add the directory to the filepaths returned
     Returns:

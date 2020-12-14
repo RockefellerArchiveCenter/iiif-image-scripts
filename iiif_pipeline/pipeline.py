@@ -61,7 +61,7 @@ class IIIFPipeline:
                 logging.info(
                     "Processing started for identifier {} created for ref_id {}".format(identifier, ref_id))
                 tiff_files = matching_files(
-                    obj_source_dir, skip=skip, prepend=True)
+                    obj_source_dir, suffix=".tif", skip=skip, prepend=True)
                 create_jp2(tiff_files, identifier, jp2_dir, replace)
                 logging.info(
                     "JPEG2000 derivatives with identifier {} created for ref_id {}".format(identifier, ref_id))

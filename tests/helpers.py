@@ -31,11 +31,11 @@ def copy_sample_files(directory, identifiers, page_count,
         for ident in identifiers:
             for page in range(page_count):
                 target = os.path.join(
-                    directory, "{}_{}.{}".format(
+                    directory, "{}_{}_me.{}".format(
                         ident, page, suffix))
                 if to_master:
                     target = os.path.join(
-                        directory, ident, "master", "{}_{}.{}".format(
+                        directory, ident, "master", "{}_{}_se.{}".format(
                             ident, page, suffix))
                     if not os.path.isdir(os.path.join(
                             directory, ident, "master")):

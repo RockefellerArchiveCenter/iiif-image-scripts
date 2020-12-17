@@ -1,5 +1,6 @@
 from os import listdir, remove
 from os.path import isdir, isfile, join
+from shutil import rmtree
 
 
 def matching_files(directory, prefix=None, suffix=None,
@@ -50,3 +51,12 @@ def cleanup_files(identifier, directories):
     for directory in directories:
         for f in matching_files(directory, prefix=identifier, prepend=True):
             remove(f)
+
+
+def cleanup_dir(dir_path):
+    """Removes a directory.
+
+    Args:
+        dir_path (str): path of the directory to be removed.
+    """
+    rmtree(dir_path)

@@ -6,7 +6,7 @@ import shortuuid
 
 from .clients import ArchivesSpaceClient, AWSClient
 from .derivatives import compress_pdf, create_jp2, create_pdf, ocr_pdf
-from .helpers import cleanup_files, matching_files, refid_dirs
+from .helpers import cleanup_dir, cleanup_files, matching_files, refid_dirs
 from .manifests import ManifestMaker
 
 
@@ -20,7 +20,7 @@ class IIIFPipeline:
         self.config = ConfigParser()
         self.config.read("local_settings.cfg")
 
-    def run(self, source_dir, target_dir, skip, replace):
+    def run(self, source_dir, target_dir, skip, replace, cleanup_source):
         """Instantiates and runs derivative creation, manifest creation, and AWS upload files.
 
         Args:
@@ -93,6 +93,8 @@ class IIIFPipeline:
                         "{} uploaded for {}".format(
                             file_type, identifier))
                 cleanup_files(identifier, [jp2_dir, pdf_dir, manifest_dir])
+                if cleanup_source:
+                    cleanup_dir(directory)
             except Exception as e:
                 print(
                     "Error processing identifier {} with ref_id {}: {}".format(

@@ -20,12 +20,17 @@ def main():
         "--replace",
         action="store_true",
         help="Replace existing files.")
+    parser.add_argument(
+        "--cleanup_source",
+        action="store_true",
+        help="Delete source files if they are successfully processed.")
     args = parser.parse_args()
     IIIFPipeline().run(
         args.source_directory,
         args.target_directory,
         args.skip,
-        args.replace)
+        args.replace,
+        args.cleanup_source)
 
 
 if __name__ == "__main__":

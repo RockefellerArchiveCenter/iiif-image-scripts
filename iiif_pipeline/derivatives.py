@@ -56,7 +56,7 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                        "-p", "RPCL"]
     for original_file in files:
         derivative_path = os.path.join(derivative_dir, "{}_{}.jp2".format(
-            identifier, os.path.splitext(original_file)[0].split("_")[-1]))
+            identifier, os.path.splitext(original_file)[0].rstrip("_me").rstrip("_se").split("_")[-1]))
         if (os.path.isfile(derivative_path) and not replace):
             raise FileExistsError(
                 "Error creating JPEG2000: {} already exists".format(derivative_path))

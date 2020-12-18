@@ -3,7 +3,8 @@ import random
 import shutil
 
 from helpers import copy_sample_files, random_string
-from iiif_pipeline.helpers import cleanup_files, matching_files, refid_dirs
+from iiif_pipeline.helpers import (cleanup_files, get_page_number,
+                                   matching_files, refid_dirs)
 
 FIXTURE_FILEPATH = os.path.join("fixtures", "jp2")
 MATCHING_FIXTURE_FILEPATH = os.path.join("fixtures", "matching")
@@ -55,6 +56,16 @@ def test_cleanup_files():
     for uuid in UUIDS:
         cleanup_files(uuid, [os.path.join(SOURCE_DIR, uuid, "master")])
         assert len(os.listdir(os.path.join(SOURCE_DIR, uuid, "master"))) == 0
+
+
+def test_get_page_number():
+    """Ensure page numbers are correctly parsed."""
+    for filepath, page_number in [
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/foo_00336.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_se.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_me.tif", "00336")]:
+        assert get_page_number(filepath) == page_number
 
 
 def teardown():

@@ -5,6 +5,8 @@ from mimetypes import MimeTypes
 
 from PIL import Image
 
+from .helpers import get_page_number
+
 
 def calculate_layers(file):
     """Calculates the number of layers based on pixel dimensions.
@@ -56,7 +58,7 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                        "-p", "RPCL"]
     for original_file in files:
         derivative_path = os.path.join(derivative_dir, "{}_{}.jp2".format(
-            identifier, os.path.splitext(original_file)[0].rstrip("_me").rstrip("_se").split("_")[-1]))
+            identifier, get_page_number(original_file)))
         if (os.path.isfile(derivative_path) and not replace):
             raise FileExistsError(
                 "Error creating JPEG2000: {} already exists".format(derivative_path))

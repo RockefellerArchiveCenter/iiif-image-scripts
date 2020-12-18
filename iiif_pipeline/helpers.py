@@ -1,5 +1,5 @@
 from os import listdir, remove
-from os.path import isdir, isfile, join
+from os.path import basename, isdir, isfile, join, splitext
 from shutil import rmtree
 
 
@@ -60,3 +60,10 @@ def cleanup_dir(dir_path):
         dir_path (str): path of the directory to be removed.
     """
     rmtree(dir_path)
+
+
+def get_page_number(filepath):
+    """Parses a page number from a filename."""
+    filename, _ = splitext(basename(filepath))
+    trimmed = filename.rstrip("_me").rstrip("_se")
+    return trimmed.split("_")[-1]

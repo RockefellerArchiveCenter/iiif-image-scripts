@@ -14,7 +14,7 @@ Then build the image:
     $ docker build . -t iiif-pipeline
 
 You can then run the pipeline, mounting any local directories you need access to.
-For example, the command above will mount `/local_files/` on your local machine
+For example, the command below will mount `/local_files/` on your local machine
 to `/source_files/` in the running container and then execute `iiif_pipeline.py`,
 using `/tmp` in the container as a destination directory:
 
@@ -68,6 +68,10 @@ created before they are uploaded. The user running the script must own the
 `target_directory`. The optional `--skip` flag will skip image files with
 filenames ending in `_001`, and the optional `--replace` flag will replace
 existing files.
+
+If the path to the `source_directory` or `target_directory` include spaces, you must wrap them in either single or double quotation marks:
+
+  $ iiif-pipeline.py 'source directory' 'target directory' [--skip] [--replace]
 
 
 ## Configuration

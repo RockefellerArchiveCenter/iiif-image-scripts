@@ -70,7 +70,6 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                        "-o", derivative_path,
                        "-n", str(layers),
                        "-SOP"] + default_options
-                print(cmd)
                 subprocess.run(cmd)
             else:
                 raise Exception(

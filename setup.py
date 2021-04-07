@@ -15,7 +15,7 @@ setup(
     license='MIT',
     packages=find_packages(),
     install_requires=[
-        'ArchivesSnake'
+        'ArchivesSnake',
         'boto3',
         'iiif-prezi',
         'img2pdf',

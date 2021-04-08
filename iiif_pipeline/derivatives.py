@@ -70,11 +70,7 @@ def create_jp2(files, identifier, derivative_dir, replace=False):
                        "-o", derivative_path,
                        "-n", str(layers),
                        "-SOP"] + default_options
-                try:
-                    subprocess.run(cmd, check=True)
-                except subprocess.CalledProcessError:
-                    raise Exception(
-                        "Error creating JPEG2000: {} is not a valid TIFF".format(original_file))
+                subprocess.run(cmd, check=True)
             else:
                 raise Exception(
                     "Error creating JPEG2000: {} is not a valid TIFF".format(original_file))

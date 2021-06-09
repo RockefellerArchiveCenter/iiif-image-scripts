@@ -67,8 +67,8 @@ def get_page_number(filepath):
     filename, _ = splitext(basename(filepath))
     if "_se" in filename:
         trimmed = filename.split("_se")[0]
-    elif "_me" in filename:
-        trimmed = filename.split("_me")[0]
+    elif "_m" in filename:
+        trimmed = filename.split("_m")[0]
     else:
         trimmed = filename
     return trimmed.split("_")[-1]

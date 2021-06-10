@@ -63,7 +63,13 @@ def cleanup_dir(dir_path):
 
 
 def get_page_number(filepath):
-    """Parses a page number from a filename."""
+    """Parses a page number from a filename.
+
+    Presumes that:
+        The page number is preceded by an underscore
+        The page number is  immediately followed by either by `_m`, `_me` or `_se`,
+          or the file extension.
+    """
     filename, _ = splitext(basename(filepath))
     if "_se" in filename:
         trimmed = filename.split("_se")[0]

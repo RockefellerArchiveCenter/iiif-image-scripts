@@ -63,8 +63,13 @@ def test_get_page_number():
     for filepath, page_number in [
             ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336.tif", "00336"),
             ("/source_files/73ebb410267f43af884fd158d0427f8f/master/foo_00336.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_m.tif", "00336"),
             ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_se.tif", "00336"),
-            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_me.tif", "00336")]:
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_me.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_se-12345.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/00336_me-12345.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/foo_00336_se-12345.tif", "00336"),
+            ("/source_files/73ebb410267f43af884fd158d0427f8f/master/foo_00336_me-12345.tif", "00336")]:
         assert get_page_number(filepath) == page_number
 
 

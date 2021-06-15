@@ -3,7 +3,7 @@ boto3==1.16.8
 iiif-prezi==0.3.0
 img2pdf==0.4.0
 ocrmypdf==11.3.3
-Pillow==8.1.1
+Pillow==8.2.0
 pytest==4.3.0
 shortuuid==1.0.1
 vcrpy==4.1.0
